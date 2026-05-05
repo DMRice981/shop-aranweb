@@ -1,6 +1,7 @@
-import './assets/main.css'
-
 import { createApp } from 'vue'
 import App from './App.vue'
+import router from './router'  // 必须有这一行！
 
-createApp(App).mount('#app')
+const app = createApp(App)
+app.use(router)  // 必须有这一行！
+app.mount('#app')

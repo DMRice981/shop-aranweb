@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "format": "prettier --write \"src/**/*.{js,vue,css,json}\""
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
@@ -17,6 +18,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.6",
+    "prettier": "^3.3.3",
     "vite": "^8.0.8",
     "vite-plugin-vue-devtools": "^8.1.1"
   },

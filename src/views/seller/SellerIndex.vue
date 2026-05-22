@@ -4,7 +4,6 @@
       <div class="title">商家中心</div>
       <div class="item" :class="{active:page===0}" @click="page=0">商品管理</div>
       <div class="item" :class="{active:page===1}" @click="page=1">售后管理</div>
-      <!-- 就这里修复了！-->
       <div class="item logout" @click="logout">退出</div>
     </div>
     <div class="content">
@@ -19,11 +18,9 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import SellerGoods from './SellerGoods.vue'
 import SellerAfterSale from './SellerAfterSale.vue'
-
 const router = useRouter()
 const page = ref(0)
 
-// 退出登录方法
 const logout = () => {
   localStorage.removeItem('seller')
   router.push('/seller/login')

@@ -1,11 +1,61 @@
 <template>
-  <div class="page">
-    <div class="card">
-      <h2>登录</h2>
-      <input v-model="username" placeholder="用户名" />
-      <input v-model="password" type="password" placeholder="密码" />
-      <button @click="login">登录</button>
-      <p @click="$router.push('/register')">注册</p>
+  <div class="login-page">
+    <div class="login-container">
+      <el-card class="login-card" shadow="hover">
+        <div class="login-header">
+          <div class="logo-section">
+            <el-icon :size="48" color="#667eea"><Shop /></el-icon>
+            <h1>Aran Shop</h1>
+          </div>
+          <p>欢迎回来，继续购物之旅</p>
+        </div>
+
+        <el-form :model="form" class="login-form">
+          <el-form-item>
+            <el-input
+              v-model="form.username"
+              placeholder="请输入用户名"
+              size="large"
+              prefix-icon="User"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-input
+              v-model="form.password"
+              type="password"
+              placeholder="请输入密码"
+              size="large"
+              prefix-icon="Lock"
+              show-password
+              @keyup.enter="login"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button
+              type="primary"
+              size="large"
+              class="login-button"
+              :loading="loading"
+              @click="login"
+            >
+              <el-icon><User /></el-icon>
+              登录
+            </el-button>
+          </el-form-item>
+        </el-form>
+
+        <div class="login-footer">
+          <span>还没有账号？</span>
+          <el-link type="primary" @click="$router.push('/register')">立即注册</el-link>
+        </div>
+
+        <div class="back-home">
+          <el-button link @click="$router.push('/')">
+            <el-icon><ArrowLeft /></el-icon>
+            返回首页
+          </el-button>
+        </div>
+      </el-card>
     </div>
   </div>
 </template>
@@ -13,25 +63,129 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+
 const router = useRouter()
-const username = ref('')
-const password = ref('')
+const loading = ref(false)
+const form = ref({
+  username: '',
+  password: ''
+})
 
 const login = async () => {
-  const list = await fetch('/api/user/list').then(r => r.json())
-  const user = list.find(u => u.username === username.value && u.password === password.value)
-  if (user) {
-    localStorage.setItem('user', JSON.stringify(user))
-    router.push('/')
-  } else {
-    alert('账号密码错误')
+  if (!form.value.username || !form.value.password) {
+    ElMessage.warning('请输入用户名和密码')
+    return
+  }
+
+  loading.value = true
+  try {
+    const res = await fetch('/api/user/list')
+    const list = await res.json()
+    const user = list.find(u => u.username === form.value.username && u.password === form.value.password)
+    
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user))
+      ElMessage.success('登录成功')
+      router.push('/')
+    } else {
+      ElMessage.error('用户名或密码错误')
+    }
+  } catch (error) {
+    ElMessage.error('登录失败，请稍后重试')
+  } finally {
+    loading.value = false
   }
 }
 </script>
 
 <style scoped>
-.page{width:100%;height:100vh;display:flex;align-items:center;justify-content:center;background:#409eff;}
-.card{background:#fff;padding:30px;border-radius:12px;width:360px;}
-input{width:100%;margin:10px 0;padding:12px;border:1px solid #ddd;border-radius:8px;}
-button{width:100%;background:#409eff;color:#fff;padding:12px;border:none;border-radius:8px;margin-top:10px;}
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 420px;
+}
+
+.login-card {
+  border-radius: 24px;
+  border: none;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+}
+
+.login-header {
+  text-align: center;
+  padding: 20px 0 30px;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.logo-section h1 {
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.login-header p {
+  color: #666;
+  font-size: 15px;
+  margin: 0;
+}
+
+.login-form {
+  padding: 0 20px;
+}
+
+.login-button {
+  width: 100%;
+  font-size: 16px;
+  font-weight: 600;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+}
+
+.login-button:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+}
+
+.login-footer {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-size: 14px;
+}
+
+.back-home {
+  text-align: center;
+  padding-top: 10px;
+  padding-bottom: 20px;
+}
+
+:deep(.el-input__wrapper) {
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px #e0e0e0 inset;
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px #667eea inset;
+}
 </style>

@@ -1,72 +1,165 @@
 <template>
-  <div class="addr-wrap">
-    <h2>我的收货地址</h2>
-    <div class="addr-item" v-for="item in addrList" :key="item.id">
-      <p>收件人：{{ item.name }}</p>
-      <p>手机号：{{ item.phone }}</p>
-      <p>地址：{{ item.province }} {{ item.city }} {{ item.district }} {{ item.detail }}</p>
-      <p v-if="item.isDefault === 1">默认地址</p>
-    </div>
-
-    <div class="add-form">
-      <h3>新增地址</h3>
-      <input v-model="form.name" placeholder="收件人">
-      <input v-model="form.phone" placeholder="手机号">
-      <input v-model="form.province" placeholder="省份">
-      <input v-model="form.city" placeholder="城市">
-      <input v-model="form.district" placeholder="区县">
-      <input v-model="form.detail" placeholder="详细地址">
-      <button @click="addAddr">保存地址</button>
+  <div class="user-page">
+    <div class="user-container">
+      <el-page-header @back="$router.push('/')" content="返回首页" class="page-header" />
+      
+      <el-card class="user-card" shadow="hover">
+        <div class="user-info">
+          <div class="avatar">
+            <el-icon :size="64"><User /></el-icon>
+          </div>
+          <div class="info">
+            <h3>{{ user?.username || '用户' }}</h3>
+            <p>欢迎回来</p>
+          </div>
+        </div>
+        <el-divider />
+        <div class="quick-menu">
+          <div class="menu-item" @click="$router.push('/order')">
+            <el-icon :size="28"><Document /></el-icon>
+            <span>我的订单</span>
+          </div>
+          <div class="menu-item" @click="$router.push('/address')">
+            <el-icon :size="28"><Location /></el-icon>
+            <span>收货地址</span>
+          </div>
+          <div class="menu-item" @click="$router.push('/cart')">
+            <el-icon :size="28"><ShoppingCart /></el-icon>
+            <span>我的购物车</span>
+          </div>
+        </div>
+        <el-divider />
+        <el-button type="danger" class="logout-btn" @click="logout">
+          <el-icon><SwitchButton /></el-icon>
+          退出登录
+        </el-button>
+      </el-card>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 
+const router = useRouter()
 const user = JSON.parse(localStorage.getItem('user') || 'null')
-const addrList = ref([])
 
-const form = ref({
-  userId: user.id,
-  name: '',
-  phone: '',
-  province: '',
-  city: '',
-  district: '',
-  detail: '',
-  isDefault: 0
-})
-
-// 获取地址列表
-const getList = async () => {
-  const res = await fetch('/api/userAddress/list')
-  const all = await res.json()
-  addrList.value = all.filter(item => item.userId === user.id)
+const logout = () => {
+  localStorage.removeItem('user')
+  ElMessage.success('退出成功')
+  router.push('/login')
 }
 
 onMounted(() => {
-  getList()
+  if (!user) {
+    ElMessage.warning('请先登录')
+    router.push('/login')
+  }
 })
-
-// 新增地址
-const addAddr = async () => {
-  await fetch('/api/userAddress/add', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(form.value)
-  })
-  alert('地址添加成功')
-  getList()
-  // 清空表单
-  form.value = { userId: user.id, name: '', phone: '', province: '', city: '', district: '', detail: '', isDefault: 0 }
-}
 </script>
 
 <style scoped>
-.addr-wrap{max-width:900px;margin:40px auto;padding:0 20px;}
-.addr-item{border:1px solid #eee;padding:15px;border-radius:8px;margin-bottom:15px;}
-.add-form{margin-top:30px;border-top:1px solid #eee;padding-top:20px;}
-input{display:block;width:100%;margin:8px 0;padding:10px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;}
-button{padding:10px 20px;background:#409eff;color:#fff;border:none;border-radius:6px;}
+.user-page {
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.user-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+:deep(.el-page-header__inner),
+:deep(.el-page-header__title),
+:deep(.el-page-header__content) {
+  color: white;
+}
+
+.user-card {
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.98);
+  border: none;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.avatar {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.info h3 {
+  margin: 0;
+  color: #333;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.info p {
+  margin: 8px 0 0 0;
+  color: #666;
+  font-size: 16px;
+}
+
+.quick-menu {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 20px 0;
+}
+
+.menu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 16px;
+  background: linear-gradient(135deg, #f0f3ff 0%, #e0e7ff 100%);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.menu-item:hover {
+  transform: translateY(-4px);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.menu-item span {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.logout-btn {
+  width: 100%;
+  margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+  .user-page {
+    padding: 12px;
+  }
+  
+  .quick-menu {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
 </style>

@@ -15,8 +15,8 @@ const route = useRoute()
 const info = ref({})
 
 onMounted(async () => {
-  const res = await fetch(`/api/goods/get/${route.params.id}`).then(r => r.json())
-  info.value = res
+  // const res = await fetch(`goods/get/${route.params.id}`).then(r => r.json())
+  // info.value = res
 })
 
 const addCart = async () => {

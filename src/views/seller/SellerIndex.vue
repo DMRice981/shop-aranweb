@@ -4,7 +4,7 @@
       <div class="title">商家中心</div>
       <div class="item" :class="{active:page===0}" @click="page=0">商品管理</div>
       <div class="item" :class="{active:page===1}" @click="page=1">售后管理</div>
-      <div class="item logout" @click="logout">退出</div>
+      <div class="item logout" @click="res.json()logout">退出</div>
     </div>
     <div class="content">
       <SellerGoods v-if="page===0" />

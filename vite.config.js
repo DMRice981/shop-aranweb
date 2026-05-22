@@ -13,7 +13,6 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
-  // 新增：代理后端接口，解决跨域
   server: {
     proxy: {
       '/api': {

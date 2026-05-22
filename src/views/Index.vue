@@ -52,7 +52,8 @@ const goods = ref([])
 
 onMounted(async () => {
   const res = await fetch('/api/goods/list')
-  goods.value = await res.json()
+  console.log('res ======> ', res)
+  // goods.value = await res.json()
 })
 
 const logout = () => {

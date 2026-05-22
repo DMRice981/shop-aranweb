@@ -94,12 +94,58 @@
                 <el-button type="danger" plain @click="cancelOrder(item)" v-if="item.orderStatus === 0 && item.payStatus === 0">
                   <el-icon><CircleClose /></el-icon> 取消订单
                 </el-button>
+                <el-button type="warning" @click="openAfterSaleDialog(item)">
+                  <el-icon><Service /></el-icon> 申请售后
+                </el-button>
               </div>
             </el-card>
           </div>
         </div>
       </el-card>
     </div>
+
+    <!-- 申请售后对话框 -->
+    <el-dialog v-model="afterSaleDialogVisible" title="申请售后" width="500px">
+      <el-form :model="afterSaleForm" label-width="100px">
+        <el-form-item label="订单ID">
+          <el-input-number 
+            v-model="afterSaleForm.orderId" 
+            disabled
+            style="width: 100%" 
+          />
+        </el-form-item>
+        <el-form-item label="商品ID">
+          <el-input-number 
+            v-model="afterSaleForm.goodsId" 
+            :min="1" 
+            style="width: 100%" 
+            placeholder="请输入要售后的商品ID" 
+          />
+        </el-form-item>
+        <el-form-item label="卖家ID">
+          <el-input-number 
+            v-model="afterSaleForm.sellerId" 
+            :min="1" 
+            style="width: 100%" 
+            placeholder="请输入卖家ID" 
+          />
+        </el-form-item>
+        <el-form-item label="售后原因">
+          <el-input 
+            v-model="afterSaleForm.reason" 
+            type="textarea" 
+            :rows="4" 
+            placeholder="请输入售后原因" 
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="afterSaleDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitAfterSale" :loading="afterSaleSubmitting">
+          提交申请
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -113,6 +159,15 @@ const orderList = ref([])
 const orderItemsMap = ref({})
 const addressMap = ref({})
 const loading = ref(false)
+const afterSaleDialogVisible = ref(false)
+const afterSaleSubmitting = ref(false)
+const afterSaleForm = ref({
+  orderId: null,
+  goodsId: null,
+  sellerId: null,
+  reason: ''
+})
+const user = JSON.parse(localStorage.getItem('user') || 'null')
 
 const getStatusText = (status) => {
   const map = ['待付款', '待发货', '待收货', '已完成', '已取消']
@@ -156,7 +211,6 @@ const getAddress = async (addressId) => {
 }
 
 const getOrderList = async () => {
-  const user = JSON.parse(localStorage.getItem('user') || 'null')
   if (!user) {
     ElMessage.warning('请先登录')
     router.push('/login')
@@ -252,6 +306,51 @@ const cancelOrder = async (order) => {
     if (error !== 'cancel') {
       ElMessage.error('取消失败')
     }
+  }
+}
+
+const openAfterSaleDialog = (order) => {
+  afterSaleForm.value = {
+    orderId: order.id,
+    goodsId: null,
+    sellerId: null,
+    reason: ''
+  }
+  afterSaleDialogVisible.value = true
+}
+
+const submitAfterSale = async () => {
+  if (!afterSaleForm.value.goodsId) {
+    ElMessage.warning('请输入商品ID')
+    return
+  }
+  if (!afterSaleForm.value.sellerId) {
+    ElMessage.warning('请输入卖家ID')
+    return
+  }
+  if (!afterSaleForm.value.reason) {
+    ElMessage.warning('请输入售后原因')
+    return
+  }
+
+  afterSaleSubmitting.value = true
+  try {
+    const applyData = {
+      ...afterSaleForm.value,
+      userId: user.id
+    }
+    await fetch('/api/after-sale/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(applyData)
+    })
+    ElMessage.success('售后申请成功')
+    afterSaleDialogVisible.value = false
+    router.push('/after-sale')
+  } catch (error) {
+    ElMessage.error('售后申请失败')
+  } finally {
+    afterSaleSubmitting.value = false
   }
 }
 

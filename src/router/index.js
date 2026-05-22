@@ -13,6 +13,7 @@ const routes = [
     { path: '/checkout', component: () => import('@/views/Checkout.vue'), meta: { requiresAuth: true, title: '结算' } },
     { path: '/address', component: () => import('@/views/Address.vue'), meta: { requiresAuth: true, title: '收货地址' } },
     { path: '/order', component: () => import('@/views/Order.vue'), meta: { requiresAuth: true, title: '我的订单' } },
+    { path: '/after-sale', component: () => import('@/views/AfterSale.vue'), meta: { requiresAuth: true, title: '我的售后' } },
     { path: '/comment', component: () => import('@/views/Comment.vue'), meta: { requiresAuth: true, title: '评价' } },
 
     // 管理员后台页面

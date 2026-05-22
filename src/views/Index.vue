@@ -75,15 +75,16 @@
     <!-- 商品列表区 -->
     <main class="main-content">
       <div class="section-header animate-fadeInUp">
+        <div class="section-tag">精选推荐</div>
         <h2 class="section-title">
           <el-icon><Fire /></el-icon> 热销商品
         </h2>
-        <p class="section-subtitle">发现您喜欢的商品</p>
+        <p class="section-subtitle">发现您喜欢的商品，享受品质购物</p>
       </div>
 
       <div v-if="loading" class="loading-container">
         <div class="loading-spinner"></div>
-        <p>加载中...</p>
+        <p>正在加载商品...</p>
       </div>
 
       <div v-else class="goods-grid">
@@ -91,27 +92,59 @@
           v-for="(item, index) in goods" 
           :key="item.id" 
           class="goods-card animate-fadeInUp"
-          :style="{ animationDelay: `${index * 0.1 + 0.3}s` }"
+          :style="{ animationDelay: `${index * 0.08 + 0.3}s` }"
           @click="$router.push(`/goods/${item.id}`)"
         >
-          <div class="card-image">
-            <img :src="item.goodsImg || 'https://images.unsplash.com/photo-1523275335684-37898b5b8fae?w=400&h=400&fit=crop'" :alt="item.goodsName" />
-            <div class="card-overlay">
-              <el-button type="primary" class="quick-view">
-                <el-icon><View /></el-icon> 查看详情
-              </el-button>
+          <div class="card-wrapper">
+            <div class="card-image">
+              <div class="image-placeholder" v-if="!item.goodsImg">
+                <el-icon :size="64"><Picture /></el-icon>
+              </div>
+              <img v-else :src="item.goodsImg" :alt="item.goodsName" />
+              <div class="card-badges">
+                <span class="badge hot" v-if="item.sales > 100">热卖</span>
+                <span class="badge new" v-if="item.sales < 10">新品</span>
+              </div>
+              <div class="card-overlay">
+                <el-button type="primary" class="quick-view" @click.stop="$router.push(`/goods/${item.id}`)">
+                  <el-icon><View /></el-icon> 立即查看
+                </el-button>
+              </div>
             </div>
-          </div>
-          <div class="card-body">
-            <h3 class="card-title">{{ item.goodsName || '精美商品' }}</h3>
-            <div class="card-footer">
-              <span class="card-price">¥{{ item.price || '0.00' }}</span>
-              <el-button type="primary" circle size="small" @click.stop="addToCart(item)">
-                <el-icon><Plus /></el-icon>
-              </el-button>
+            <div class="card-body">
+              <div class="card-category">品质好物</div>
+              <h3 class="card-title">{{ item.goodsName || '精美商品' }}</h3>
+              <p class="card-desc" v-if="item.goodsDesc">{{ item.goodsDesc.length > 40 ? item.goodsDesc.substring(0, 40) + '...' : item.goodsDesc }}</p>
+              <div class="card-meta">
+                <div class="sales-info">
+                  <el-icon><TrendCharts /></el-icon>
+                  <span>已售 {{ item.sales || 0 }}</span>
+                </div>
+                <div class="stock-info">
+                  <el-icon><Box /></el-icon>
+                  <span>库存 {{ item.stock || 0 }}</span>
+                </div>
+              </div>
+              <div class="card-footer">
+                <div class="price-wrap">
+                  <span class="currency">¥</span>
+                  <span class="card-price">{{ (item.price || 0).toFixed(2) }}</span>
+                  <span class="market-price" v-if="item.marketPrice && item.marketPrice > item.price">¥{{ item.marketPrice.toFixed(2) }}</span>
+                </div>
+                <el-button type="primary" class="add-cart-btn" @click.stop="addToCart(item)">
+                  <el-icon><ShoppingCart /></el-icon>
+                  <span>加入购物车</span>
+                </el-button>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+      
+      <div v-if="!loading && goods.length === 0" class="empty-state">
+        <el-icon :size="80"><Box /></el-icon>
+        <h3>暂无商品</h3>
+        <p>敬请期待更多好物上架</p>
       </div>
     </main>
 
@@ -418,20 +451,33 @@ const addToCart = (item) => {
 
 /* Main Content */
 .main-content {
-  max-width: 1280px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 60px 24px;
+  padding: 80px 24px;
   flex: 1;
 }
 
 .section-header {
   text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: 64px;
+}
+
+.section-tag {
+  display: inline-block;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  color: white;
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
 }
 
 .section-title {
-  font-size: 32px;
-  font-weight: 700;
+  font-size: 36px;
+  font-weight: 800;
   color: var(--text-primary);
   display: flex;
   align-items: center;
@@ -450,13 +496,13 @@ const addToCart = (item) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80px 0;
-  gap: 16px;
+  padding: 120px 0;
+  gap: 20px;
 }
 
 .loading-spinner {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border: 4px solid var(--border-color);
   border-top-color: var(--primary-color);
   border-radius: 50%;
@@ -469,30 +515,69 @@ const addToCart = (item) => {
   }
 }
 
+.empty-state {
+  text-align: center;
+  padding: 100px 0;
+  color: var(--text-secondary);
+}
+
+.empty-state h3 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 16px 0 8px;
+  color: var(--text-primary);
+}
+
 .goods-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 32px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
 }
 
 .goods-card {
-  background: white;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  background: transparent;
+  border-radius: 0;
+  overflow: visible;
+  box-shadow: none;
   transition: var(--transition-normal);
   cursor: pointer;
 }
 
 .goods-card:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.card-wrapper {
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  transition: var(--transition-normal);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-wrapper:hover {
+  transform: translateY(-12px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
 }
 
 .card-image {
   position: relative;
-  aspect-ratio: 1;
+  aspect-ratio: 4/3;
   overflow: hidden;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #adb5bd;
 }
 
 .card-image img {
@@ -502,8 +587,34 @@ const addToCart = (item) => {
   transition: var(--transition-slow);
 }
 
-.goods-card:hover .card-image img {
-  transform: scale(1.1);
+.card-wrapper:hover .card-image img {
+  transform: scale(1.08);
+}
+
+.card-badges {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.badge {
+  padding: 6px 12px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.badge.hot {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+}
+
+.badge.new {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a3a0 100%);
 }
 
 .card-overlay {
@@ -512,51 +623,135 @@ const addToCart = (item) => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.6) 100%);
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 100%);
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 20px;
+  padding: 24px;
   opacity: 0;
   transition: var(--transition-normal);
+  z-index: 5;
 }
 
-.goods-card:hover .card-overlay {
+.card-wrapper:hover .card-overlay {
   opacity: 1;
 }
 
 .quick-view {
   width: 100%;
   border-radius: 50px;
+  height: 44px;
+  font-weight: 600;
 }
 
 .card-body {
-  padding: 20px;
+  padding: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-category {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-color);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
 }
 
 .card-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.3;
+}
+
+.card-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 20px;
+  line-height: 1.6;
+  flex: 1;
+}
+
+.card-meta {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sales-info,
+.stock-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.sales-info .el-icon,
+.stock-info .el-icon {
+  color: var(--primary-color);
 }
 
 .card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+}
+
+.price-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.currency {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--danger-color);
 }
 
 .card-price {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 30px;
+  font-weight: 800;
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.market-price {
+  font-size: 14px;
+  color: #adb5bd;
+  text-decoration: line-through;
+}
+
+.add-cart-btn {
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 14px;
+  height: 42px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.add-cart-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
 }
 
 /* Admin Section */
@@ -634,6 +829,13 @@ const addToCart = (item) => {
   font-size: 14px;
 }
 
+@media (max-width: 1200px) {
+  .goods-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}
+
 @media (max-width: 968px) {
   .hero-content {
     grid-template-columns: 1fr;
@@ -652,8 +854,20 @@ const addToCart = (item) => {
   }
 
   .goods-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
+  }
+
+  .main-content {
+    padding: 60px 16px;
+  }
+
+  .section-title {
+    font-size: 28px;
+  }
+
+  .card-price {
+    font-size: 24px;
   }
 
   .header-content {
@@ -665,6 +879,34 @@ const addToCart = (item) => {
     order: 3;
     width: 100%;
     justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .goods-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .card-wrapper {
+    border-radius: 20px;
+  }
+
+  .card-body {
+    padding: 20px;
+  }
+
+  .section-title {
+    font-size: 24px;
+  }
+
+  .hero-title {
+    font-size: 28px;
+  }
+
+  .add-cart-btn {
+    padding: 8px 16px;
+    font-size: 13px;
   }
 }
 </style>

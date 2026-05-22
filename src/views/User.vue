@@ -19,6 +19,10 @@
             <el-icon :size="28"><Document /></el-icon>
             <span>我的订单</span>
           </div>
+          <div class="menu-item" @click="$router.push('/after-sale')">
+            <el-icon :size="28"><Service /></el-icon>
+            <span>我的售后</span>
+          </div>
           <div class="menu-item" @click="$router.push('/address')">
             <el-icon :size="28"><Location /></el-icon>
             <span>收货地址</span>
@@ -120,7 +124,7 @@ onMounted(() => {
 
 .quick-menu {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   padding: 20px 0;
 }
@@ -159,7 +163,7 @@ onMounted(() => {
   }
   
   .quick-menu {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

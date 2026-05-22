@@ -13,15 +13,24 @@
       <el-empty v-if="list.length === 0" description="暂无售后" />
       
       <el-table v-else :data="list" stripe style="width: 100%">
-        <el-table-column prop="reason" label="原因" />
-        <el-table-column prop="status" label="状态">
+        <el-table-column prop="id" label="售后ID" width="100" />
+        <el-table-column prop="orderId" label="订单ID" width="100" />
+        <el-table-column prop="goodsId" label="商品ID" width="100" />
+        <el-table-column prop="userId" label="用户ID" width="100" />
+        <el-table-column prop="reason" label="原因" show-overflow-tooltip />
+        <el-table-column prop="status" label="状态" width="120">
           <template #default="{ row }">
             <el-tag :type="row.status === 0 ? 'warning' : 'success'">
               {{ row.status === 0 ? '待处理' : '已处理' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作">
+        <el-table-column prop="createTime" label="申请时间" width="180">
+          <template #default="{ row }">
+            {{ formatDate(row.createTime) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="120">
           <template #default="{ row }">
             <el-button 
               type="primary" 
@@ -44,6 +53,18 @@ import { ElMessage } from 'element-plus'
 const list = ref([])
 const loading = ref(false)
 const seller = JSON.parse(localStorage.getItem('seller')||'{}')
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-'
+  const date = new Date(dateStr)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
 
 const getList = async () => {
   loading.value = true

@@ -45,14 +45,21 @@
             
             <div v-for="item in checkoutItems" :key="item.id" class="goods-item">
               <div class="goods-icon">
-                <el-icon :size="40" color="#667eea"><Box /></el-icon>
+                <el-image 
+                  v-if="getGoodsInfo(item.goodsId)?.goodsImg" 
+                  :src="getGoodsInfo(item.goodsId).goodsImg" 
+                  fit="cover"
+                  class="goods-img"
+                />
+                <el-icon v-else :size="40" color="#667eea"><Box /></el-icon>
               </div>
               <div class="goods-info">
-                <h4>商品 ID: {{ item.goodsId }}</h4>
-                <p>数量：{{ item.num }}</p>
+                <h4>{{ getGoodsInfo(item.goodsId)?.goodsName || '商品 ' + item.goodsId }}</h4>
+                <p class="price">单价：¥{{ (item.price || 0).toFixed(2) }}</p>
+                <p class="quantity">数量：{{ item.num }}</p>
               </div>
               <div class="goods-price">
-                <span>¥{{ (item.price * item.num).toFixed(2) }}</span>
+                <span>¥{{ ((item.price || 0) * item.num).toFixed(2) }}</span>
               </div>
             </div>
           </el-card>
@@ -146,6 +153,7 @@ const addressList = ref([])
 const selectedAddressId = ref(null)
 const showAddressDialog = ref(false)
 const submitting = ref(false)
+const goodsMap = ref({})
 
 const user = JSON.parse(localStorage.getItem('user') || 'null')
 
@@ -167,6 +175,22 @@ const totalCount = computed(() =>
 const totalPrice = computed(() => 
   checkoutItems.value.reduce((sum, item) => sum + (item.price || 0) * item.num, 0)
 )
+
+const getGoodsInfo = (goodsId) => {
+  return goodsMap.value[goodsId]
+}
+
+const loadGoodsInfo = async () => {
+  try {
+    const res = await fetch('/api/goods/list')
+    const goodsList = await res.json()
+    goodsList.forEach(g => {
+      goodsMap.value[g.id] = g
+    })
+  } catch (error) {
+    console.error('加载商品信息失败', error)
+  }
+}
 
 const loadCheckoutItems = () => {
   const items = JSON.parse(localStorage.getItem('checkoutItems') || '[]')
@@ -237,38 +261,57 @@ const submitOrder = async () => {
     const selectedAddress = addressList.value.find(a => a.id === selectedAddressId.value)
     const orderNo = Date.now().toString() + Math.random().toString(36).substr(2, 6).toUpperCase()
     
+    // 创建订单
     const orderData = {
       userId: user.id,
+      addressId: selectedAddressId.value,
       orderNo: orderNo,
       totalPrice: totalPrice.value,
       payPrice: totalPrice.value,
       payStatus: 0,
       orderStatus: 0,
-      address: `${selectedAddress.province} ${selectedAddress.city} ${selectedAddress.district} ${selectedAddress.detail}`,
-      name: selectedAddress.name,
-      phone: selectedAddress.phone,
-      createTime: new Date().toISOString()
+      createTime: new Date()
     }
     
-    const res = await fetch('/api/order/add', {
+    const orderRes = await fetch('/api/order/add', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orderData)
     })
     
-    if (res.ok) {
-      for (const item of checkoutItems.value) {
-        await fetch(`/api/cart/delete/${item.id}`, { method: 'DELETE' })
+    if (!orderRes.ok) {
+      throw new Error('订单创建失败')
+    }
+    
+    // 创建订单项
+    for (const item of checkoutItems.value) {
+      const goodsInfo = getGoodsInfo(item.goodsId)
+      const orderItem = {
+        orderNo: orderNo,
+        goodsId: item.goodsId,
+        goodsName: goodsInfo?.goodsName || '商品 ' + item.goodsId,
+        goodsImg: goodsInfo?.goodsImg || '',
+        price: item.price || 0,
+        num: item.num,
+        createTime: new Date()
       }
       
-      localStorage.removeItem('checkoutItems')
-      ElMessage.success('订单提交成功')
-      router.push('/order')
-    } else {
-      ElMessage.error('订单提交失败')
+      await fetch('/api/orderItem/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderItem)
+      })
+      
+      // 删除购物车中的商品
+      await fetch(`/api/cart/delete/${item.id}`, { method: 'DELETE' })
     }
+    
+    localStorage.removeItem('checkoutItems')
+    ElMessage.success('订单提交成功！订单号：' + orderNo)
+    router.push('/order')
   } catch (error) {
-    ElMessage.error('订单提交失败')
+    console.error('订单提交失败', error)
+    ElMessage.error('订单提交失败：' + error.message)
   } finally {
     submitting.value = false
   }
@@ -280,6 +323,7 @@ onMounted(() => {
     router.push('/login')
     return
   }
+  loadGoodsInfo()
   loadCheckoutItems()
   loadAddressList()
 })
@@ -393,6 +437,12 @@ onMounted(() => {
   background: linear-gradient(135deg, #f0f3ff 0%, #e0e7ff 100%);
   border-radius: 12px;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.goods-img {
+  width: 100%;
+  height: 100%;
 }
 
 .goods-info {
@@ -406,9 +456,15 @@ onMounted(() => {
   color: #333;
 }
 
-.goods-info p {
+.goods-info .price {
   margin: 0;
   color: #999;
+  font-size: 13px;
+}
+
+.goods-info .quantity {
+  margin: 4px 0 0 0;
+  color: #666;
   font-size: 13px;
 }
 

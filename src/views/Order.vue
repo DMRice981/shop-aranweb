@@ -27,22 +27,52 @@
               
               <el-divider />
               
-              <div class="order-info">
-                <div class="info-row">
-                  <span class="label">收货信息:</span>
-                  <span class="value">{{ item.name }} {{ item.phone }}</span>
+              <!-- 订单商品列表 -->
+              <div class="order-goods">
+                <div v-for="orderItem in orderItemsMap[item.orderNo] || []" :key="orderItem.id" class="order-goods-item">
+                  <el-image 
+                    v-if="orderItem.goodsImg" 
+                    :src="orderItem.goodsImg" 
+                    fit="cover"
+                    class="goods-image"
+                  />
+                  <el-icon v-else :size="32" color="#667eea"><Box /></el-icon>
+                  <div class="goods-info">
+                    <h4>{{ orderItem.goodsName }}</h4>
+                    <p>数量: {{ orderItem.num }} × ¥{{ (orderItem.price || 0).toFixed(2) }}</p>
+                  </div>
+                  <div class="goods-subtotal">
+                    ¥{{ ((orderItem.price || 0) * orderItem.num).toFixed(2) }}
+                  </div>
                 </div>
-                <div class="info-row">
+              </div>
+              
+              <el-divider />
+              
+              <div class="order-info">
+                <div class="info-row" v-if="addressMap[item.addressId]">
+                  <span class="label">收货信息:</span>
+                  <span class="value">
+                    {{ addressMap[item.addressId].name }} 
+                    {{ addressMap[item.addressId].phone }}
+                  </span>
+                </div>
+                <div class="info-row" v-if="addressMap[item.addressId]">
                   <span class="label">收货地址:</span>
-                  <span class="value">{{ item.address }}</span>
+                  <span class="value">
+                    {{ addressMap[item.addressId].province }} 
+                    {{ addressMap[item.addressId].city }} 
+                    {{ addressMap[item.addressId].district }} 
+                    {{ addressMap[item.addressId].detail }}
+                  </span>
                 </div>
                 <div class="info-row">
                   <span class="label">订单金额:</span>
-                  <span class="value price">¥{{ item.totalPrice }}</span>
+                  <span class="value price">¥{{ (item.totalPrice || 0).toFixed(2) }}</span>
                 </div>
                 <div class="info-row">
                   <span class="label">实付金额:</span>
-                  <span class="value price">¥{{ item.payPrice }}</span>
+                  <span class="value price">¥{{ (item.payPrice || 0).toFixed(2) }}</span>
                 </div>
                 <div class="info-row">
                   <span class="label">订单状态:</span>
@@ -80,11 +110,49 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
 const orderList = ref([])
+const orderItemsMap = ref({})
+const addressMap = ref({})
 const loading = ref(false)
 
 const getStatusText = (status) => {
   const map = ['待付款', '待发货', '待收货', '已完成', '已取消']
   return map[status] || '未知状态'
+}
+
+const getOrderItems = async (orderNo) => {
+  if (orderItemsMap.value[orderNo]) {
+    return orderItemsMap.value[orderNo]
+  }
+  
+  try {
+    const res = await fetch('/api/orderItem/list')
+    const data = await res.json()
+    const items = data.filter(item => item.orderNo === orderNo)
+    orderItemsMap.value[orderNo] = items
+    return items
+  } catch (error) {
+    console.error('加载订单项失败', error)
+    return []
+  }
+}
+
+const getAddress = async (addressId) => {
+  if (addressMap.value[addressId]) {
+    return addressMap.value[addressId]
+  }
+  
+  try {
+    const res = await fetch('/api/userAddress/list')
+    const data = await res.json()
+    const address = data.find(a => a.id === addressId)
+    if (address) {
+      addressMap.value[addressId] = address
+    }
+    return address
+  } catch (error) {
+    console.error('加载地址失败', error)
+    return null
+  }
 }
 
 const getOrderList = async () => {
@@ -100,6 +168,14 @@ const getOrderList = async () => {
     const res = await fetch('/api/order/list')
     const data = await res.json()
     orderList.value = data.filter(o => o.userId === user.id)
+    
+    // 预加载订单项和地址
+    for (const order of orderList.value) {
+      await getOrderItems(order.orderNo)
+      if (order.addressId) {
+        await getAddress(order.addressId)
+      }
+    }
   } catch (error) {
     ElMessage.error('加载订单失败')
   } finally {
@@ -248,6 +324,52 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.order-goods {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.order-goods-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.order-goods-item .goods-image {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.order-goods-item .goods-info {
+  flex: 1;
+}
+
+.order-goods-item .goods-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.order-goods-item .goods-info p {
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.order-goods-item .goods-subtotal {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ff4757;
+  flex-shrink: 0;
 }
 
 .info-row {

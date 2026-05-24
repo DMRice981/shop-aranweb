@@ -102,9 +102,9 @@ const addressForm = ref({
 
 const getAddressList = async () => {
   try {
-    const res = await fetch('/api/userAddress/list')
-    const data = await res.json()
-    addressList.value = data.filter(item => item.userId === user?.id)
+    const res = await fetch(`/api/address/list?userId=${user?.id}`)
+    const result = await res.json()
+    addressList.value = result.data || result
   } catch (error) {
     ElMessage.error('加载地址失败')
   }
@@ -124,14 +124,14 @@ const saveAddress = async () => {
   
   try {
     if (editId.value) {
-      await fetch('/api/userAddress/update', {
+      await fetch('/api/address/update', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(addressForm.value)
       })
       ElMessage.success('修改成功')
     } else {
-      await fetch('/api/userAddress/add', {
+      await fetch('/api/address/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(addressForm.value)
@@ -152,7 +152,7 @@ const setDefault = async (id) => {
     const addr = addressList.value.find(a => a.id === id)
     if (addr) {
       addr.isDefault = 1
-      await fetch('/api/userAddress/update', {
+      await fetch('/api/address/update', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(addr)
@@ -161,7 +161,7 @@ const setDefault = async (id) => {
       for (const item of addressList.value) {
         if (item.id !== id && item.isDefault === 1) {
           item.isDefault = 0
-          await fetch('/api/userAddress/update', {
+          await fetch('/api/address/update', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(item)
@@ -185,7 +185,7 @@ const deleteAddress = async (id) => {
       type: 'warning'
     })
     
-    await fetch(`/api/userAddress/delete/${id}`, { method: 'DELETE' })
+    await fetch(`/api/address/delete/${id}`, { method: 'DELETE' })
     ElMessage.success('删除成功')
     getAddressList()
   } catch (error) {

@@ -106,17 +106,18 @@ const getList = async () => {
   
   try {
     const [cartsRes, goodsRes] = await Promise.all([
-      fetch('/api/cart/list').then(r => r.json()),
+      fetch(`/api/cart/list?userId=${user.id}`).then(r => r.json()),
       fetch('/api/goods/list').then(r => r.json())
     ])
     
-    const goodsList = Array.isArray(goodsRes) ? goodsRes : []
+    const goodsList = Array.isArray(goodsRes) ? goodsRes : (goodsRes.data || [])
     goodsMap.value = {}
     goodsList.forEach(g => {
       goodsMap.value[g.id] = g
     })
     
-    list.value = cartsRes.filter(c => c.userId === user.id).map(c => ({
+    const cartItems = cartsRes.data || cartsRes || []
+    list.value = (Array.isArray(cartItems) ? cartItems : []).map(c => ({
       ...c,
       selected: true,
       price: goodsMap.value[c.goodsId]?.price || 0

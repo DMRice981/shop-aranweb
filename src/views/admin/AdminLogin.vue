@@ -75,16 +75,19 @@ const login = async () => {
 
   loading.value = true
   try {
-    const res = await fetch('/api/admin/list')
-    const list = await res.json()
-    const admin = list.find(a => a.adminName === form.value.adminName && a.password === form.value.password)
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form.value)
+    })
+    const result = await res.json()
     
-    if (admin) {
-      localStorage.setItem('adminInfo', JSON.stringify(admin))
+    if (result.code === 200) {
+      localStorage.setItem('adminInfo', JSON.stringify(result.data))
       ElMessage.success('登录成功')
       router.push('/admin/index')
     } else {
-      ElMessage.error('账号或密码错误')
+      ElMessage.error(result.msg || '账号或密码错误')
     }
   } catch (error) {
     ElMessage.error('登录失败，请稍后重试')

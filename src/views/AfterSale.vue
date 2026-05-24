@@ -117,7 +117,7 @@ const formatDate = (dateStr) => {
 const getList = async () => {
   loading.value = true
   try {
-    const res = await fetch(`/api/after-sale/my?userId=${user.id}`)
+    const res = await fetch(`/api/after-sale/list?userId=${user.id}`)
     const data = await res.json()
     list.value = data.data || []
   } catch (error) {
@@ -161,7 +161,7 @@ const submitApply = async () => {
       ...form.value,
       userId: user.id
     }
-    await fetch('/api/after-sale/apply', {
+    await fetch('/api/after-sale/add', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(applyData)

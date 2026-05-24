@@ -91,7 +91,7 @@ const getList = async () => {
   try {
     const res = await fetch('/api/user/list')
     const data = await res.json()
-    list.value = Array.isArray(data) ? data : []
+    list.value = data.data || (Array.isArray(data) ? data : [])
   } catch (e) {
     ElMessage.error('加载失败')
     list.value = []

@@ -36,7 +36,7 @@
               
               <!-- 订单商品列表 -->
               <div class="order-goods">
-                <div v-for="orderItem in getOrderItems(item.orderNo)" :key="orderItem.id" class="order-goods-item">
+                <div v-for="orderItem in getOrderItems(item.id)" :key="orderItem.id" class="order-goods-item">
                   <el-image 
                     v-if="orderItem.goodsImg" 
                     :src="orderItem.goodsImg" 
@@ -88,16 +88,16 @@
               </div>
 
               <div class="order-actions">
-                <el-button v-if="item.payStatus !== 1" type="primary" @click="payOrder(item)">
+                <el-button v-if="item.payStatus !== 1 && item.orderStatus === 0" type="primary" @click="payOrder(item)">
                   <el-icon><CreditCard /></el-icon> 立即支付
                 </el-button>
-                <el-button v-if="item.orderStatus === 0 && item.payStatus === 1" type="success" @click="confirmOrder(item)">
+                <el-button v-if="item.orderStatus === 2" type="success" @click="confirmOrder(item)">
                   <el-icon><CircleCheck /></el-icon> 确认收货
                 </el-button>
-                <el-button type="danger" plain @click="cancelOrder(item)" v-if="item.orderStatus === 0 && item.payStatus === 0">
+                <el-button type="danger" plain @click="cancelOrder(item)" v-if="item.orderStatus < 3 && item.orderStatus !== 4">
                   <el-icon><CircleClose /></el-icon> 取消订单
                 </el-button>
-                <el-button type="warning" @click="openAfterSaleDialog(item)" v-if="item.orderStatus >= 2">
+                <el-button type="warning" @click="openAfterSaleDialog(item)" v-if="item.orderStatus >= 3">
                   <el-icon><Service /></el-icon> 申请售后
                 </el-button>
               </div>
@@ -146,7 +146,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getOrderList as fetchOrderListAPI, updateOrder as updateOrderAPI } from '@/api/order'
+import { getOrderList as fetchOrderListAPI, payOrder as payOrderAPI, confirmOrder as confirmOrderAPI, cancelOrder as cancelOrderAPI } from '@/api/order'
 import { getAddressList } from '@/api/userAddress'
 
 const router = useRouter()
@@ -179,9 +179,9 @@ const getPayStatusType = (status) => {
 
 const getOrderStatusText = (status) => {
   const map = {
-    0: '待发货',
-    1: '已发货',
-    2: '配送中',
+    0: '待付款',   // 待发货 & 未支付
+    1: '待发货',   // 待发货 & 已支付
+    2: '已发货',   // 配送中
     3: '已完成',
     4: '已取消'
   }
@@ -190,11 +190,11 @@ const getOrderStatusText = (status) => {
 
 const getOrderStatusType = (status) => {
   const types = {
-    0: 'info',
-    1: 'primary',
-    2: 'warning',
-    3: 'success',
-    4: 'danger'
+    0: 'warning',  // 待付款 → 橙色警示
+    1: 'primary',  // 待发货 → 蓝色
+    2: 'info',     // 已发货 → 灰蓝
+    3: 'success',  // 已完成 → 绿色
+    4: 'danger'    // 已取消 → 红色
   }
   return types[status] || 'info'
 }
@@ -211,8 +211,8 @@ const formatDate = (dateStr) => {
   })
 }
 
-const getOrderItems = (orderNo) => {
-  return orderItemsMap.value[orderNo] || []
+const getOrderItems = (orderId) => {
+  return orderItemsMap.value[orderId] || []
 }
 
 const getAddress = (addressId) => {
@@ -221,7 +221,7 @@ const getAddress = (addressId) => {
 
 const loadAddresses = async () => {
   try {
-    const res = await getAddressList()
+    const res = await getAddressList(user?.id)
     const addresses = res.data || res || []
     addresses.forEach(addr => {
       addressMap.value[addr.id] = addr
@@ -241,18 +241,20 @@ const loadOrderList = async () => {
   loading.value = true
   try {
     const res = await fetchOrderListAPI(user.id)
-    const data = res.data || res || []
-    
-    const orders = data.map(dto => dto.order || dto).filter(Boolean)
-    orderList.value = orders.filter(o => o.userId === user.id)
-    
-    const allOrderItems = data.flatMap(dto => dto.orderItems || [])
-    allOrderItems.forEach(item => {
-      if (!orderItemsMap.value[item.orderNo]) {
-        orderItemsMap.value[item.orderNo] = []
+    const orders = res.data || res || []
+    orderList.value = Array.isArray(orders) ? orders : []
+
+    // 加载每个订单的订单项
+    for (const order of orderList.value) {
+      try {
+        const itemRes = await fetch(`/api/orderItem/list?orderId=${order.id}`)
+        const itemResult = await itemRes.json()
+        const items = itemResult.data || []
+        orderItemsMap.value[order.id] = items
+      } catch (e) {
+        console.error(`加载订单 ${order.id} 的订单项失败`, e)
       }
-      orderItemsMap.value[item.orderNo].push(item)
-    })
+    }
     
     await loadAddresses()
   } catch (error) {
@@ -265,18 +267,13 @@ const loadOrderList = async () => {
 
 const payOrder = async (order) => {
   try {
-    await ElMessageBox.confirm(`确认支付 ¥${order.payPrice} ?`, '支付确认', {
+    await ElMessageBox.confirm(`确认支付 ¥${order.payPrice || order.totalPrice} ?`, '支付确认', {
       confirmButtonText: '确认支付',
       cancelButtonText: '取消',
       type: 'info'
     })
     
-    const updateData = {
-      ...order,
-      payStatus: 1
-    }
-    
-    await updateOrderAPI(updateData)
+    await payOrderAPI(order.id)
     ElMessage.success('支付成功')
     await loadOrderList()
   } catch (error) {
@@ -295,12 +292,7 @@ const confirmOrder = async (order) => {
       type: 'info'
     })
     
-    const updateData = {
-      ...order,
-      orderStatus: 3
-    }
-    
-    await updateOrderAPI(updateData)
+    await confirmOrderAPI(order.id)
     ElMessage.success('收货成功')
     await loadOrderList()
   } catch (error) {
@@ -319,12 +311,7 @@ const cancelOrder = async (order) => {
       type: 'warning'
     })
     
-    const updateData = {
-      ...order,
-      orderStatus: 4
-    }
-    
-    await updateOrderAPI(updateData)
+    await cancelOrderAPI(order.id)
     ElMessage.success('订单已取消')
     await loadOrderList()
   } catch (error) {
@@ -339,7 +326,7 @@ const openAfterSaleDialog = (order) => {
   afterSaleForm.value = {
     orderId: order.id,
     orderNo: order.orderNo,
-    orderItems: getOrderItems(order.orderNo),
+    orderItems: getOrderItems(order.id),
     goodsId: null,
     reason: ''
   }

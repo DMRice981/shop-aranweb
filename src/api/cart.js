@@ -33,7 +33,8 @@ export function delCart(id) {
 
 export function clearCart(userId) {
   return request({
-    url: '/cart/clear/' + userId,
-    method: 'delete'
+    url: '/cart/clear',
+    method: 'delete',
+    params: { userId }
   })
 }

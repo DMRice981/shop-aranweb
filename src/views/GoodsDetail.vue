@@ -180,7 +180,8 @@ const quantity = ref(1)
 onMounted(async () => {
   try {
     const res = await fetch(`/api/goods/get/${route.params.id}`)
-    info.value = await res.json()
+    const result = await res.json()
+    info.value = result.data || result
   } catch (error) {
     ElMessage.error('加载商品失败')
   } finally {

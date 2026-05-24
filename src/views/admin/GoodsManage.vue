@@ -93,9 +93,9 @@ const form = ref({ goodsName: '', price: 0, stock: 0, categoryId: 0 })
 const getList = async () => {
   loading.value = true
   try {
-    const res = await fetch('/api/goods/list')
+    const res = await fetch('/api/goods/list/all')
     const data = await res.json()
-    list.value = Array.isArray(data) ? data : []
+    list.value = data.data || (Array.isArray(data) ? data : [])
   } catch (e) {
     ElMessage.error('加载失败')
     list.value = []

@@ -183,10 +183,13 @@ const getGoodsInfo = (goodsId) => {
 const loadGoodsInfo = async () => {
   try {
     const res = await fetch('/api/goods/list')
-    const goodsList = await res.json()
-    goodsList.forEach(g => {
-      goodsMap.value[g.id] = g
-    })
+    const result = await res.json()
+    const goodsList = result.data || result
+    if (Array.isArray(goodsList)) {
+      goodsList.forEach(g => {
+        goodsMap.value[g.id] = g
+      })
+    }
   } catch (error) {
     console.error('加载商品信息失败', error)
   }
@@ -206,9 +209,9 @@ const loadAddressList = async () => {
   if (!user) return
   
   try {
-    const res = await fetch('/api/userAddress/list')
-    const data = await res.json()
-    addressList.value = data.filter(item => item.userId === user.id)
+    const res = await fetch(`/api/address/list?userId=${user.id}`)
+    const result = await res.json()
+    addressList.value = result.data || result
     
     if (addressList.value.length > 0) {
       const defaultAddr = addressList.value.find(a => a.isDefault === 1)
@@ -226,7 +229,7 @@ const saveAddress = async () => {
   }
   
   try {
-    await fetch('/api/userAddress/add', {
+    await fetch('/api/address/add', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(addressForm.value)
@@ -258,56 +261,39 @@ const submitOrder = async () => {
   
   submitting.value = true
   try {
-    const selectedAddress = addressList.value.find(a => a.id === selectedAddressId.value)
-    const orderNo = Date.now().toString() + Math.random().toString(36).substr(2, 6).toUpperCase()
-    
-    // 创建订单
-    const orderData = {
+    // 构建 goodsList，使用后端 /order/create 接口一次性创建订单
+    const goodsList = checkoutItems.value.map(item => ({
+      goodsId: item.goodsId,
+      quantity: item.num
+    }))
+
+    const orderPayload = {
       userId: user.id,
       addressId: selectedAddressId.value,
-      orderNo: orderNo,
-      totalPrice: totalPrice.value,
-      payPrice: totalPrice.value,
-      payStatus: 0,
-      orderStatus: 0,
-      createTime: new Date()
+      goodsList
     }
     
-    const orderRes = await fetch('/api/order/add', {
+    const orderRes = await fetch('/api/order/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orderData)
+      body: JSON.stringify(orderPayload)
     })
+
+    const orderResult = await orderRes.json()
     
-    if (!orderRes.ok) {
-      throw new Error('订单创建失败')
+    if (orderResult.code !== 200) {
+      throw new Error(orderResult.msg || '订单创建失败')
     }
     
-    // 创建订单项
+    // 清空购物车中已结算的商品
     for (const item of checkoutItems.value) {
-      const goodsInfo = getGoodsInfo(item.goodsId)
-      const orderItem = {
-        orderNo: orderNo,
-        goodsId: item.goodsId,
-        goodsName: goodsInfo?.goodsName || '商品 ' + item.goodsId,
-        goodsImg: goodsInfo?.goodsImg || '',
-        price: item.price || 0,
-        num: item.num,
-        createTime: new Date()
+      if (item.id) {
+        await fetch(`/api/cart/delete/${item.id}`, { method: 'DELETE' })
       }
-      
-      await fetch('/api/orderItem/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderItem)
-      })
-      
-      // 删除购物车中的商品
-      await fetch(`/api/cart/delete/${item.id}`, { method: 'DELETE' })
     }
     
     localStorage.removeItem('checkoutItems')
-    ElMessage.success('订单提交成功！订单号：' + orderNo)
+    ElMessage.success('订单提交成功！')
     router.push('/order')
   } catch (error) {
     console.error('订单提交失败', error)

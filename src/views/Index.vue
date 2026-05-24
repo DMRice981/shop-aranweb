@@ -124,7 +124,7 @@
       <div class="section-header animate-fadeInUp">
         <div class="section-tag">精选推荐</div>
         <h2 class="section-title">
-          <el-icon><Fire /></el-icon> {{ selectedCategory ? currentCategoryName : '热销商品' }}
+          <el-icon><StarFilled /></el-icon> {{ selectedCategory ? currentCategoryName : '热销商品' }}
         </h2>
         <p class="section-subtitle">
           {{ searchKeyword ? `搜索结果: "${searchKeyword}"` : '发现您喜欢的商品，享受品质购物' }}
@@ -138,10 +138,10 @@
         </div>
         <div class="filter-right">
           <el-radio-group v-model="sortType" size="default">
-            <el-radio-button label="default">综合</el-radio-button>
-            <el-radio-button label="sales">销量优先</el-radio-button>
-            <el-radio-button label="price-asc">价格升序</el-radio-button>
-            <el-radio-button label="price-desc">价格降序</el-radio-button>
+            <el-radio-button value="default">综合</el-radio-button>
+            <el-radio-button value="sales">销量优先</el-radio-button>
+            <el-radio-button value="price-asc">价格升序</el-radio-button>
+            <el-radio-button value="price-desc">价格降序</el-radio-button>
           </el-radio-group>
         </div>
       </div>
@@ -270,7 +270,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, ArrowDown } from '@element-plus/icons-vue'
+import { Search, ArrowDown, StarFilled } from '@element-plus/icons-vue'
 import { getGoodsList } from '@/api/goods'
 import { getCategoryList } from '@/api/category'
 import { getBannerList } from '@/api/banner'
@@ -386,7 +386,7 @@ const filterByCategory = (categoryId) => {
 
 const getCategoryName = (categoryId) => {
   const category = categories.value.find(c => c.id === categoryId)
-  return category?.categoryName || ''
+  return category?.name || category?.categoryName || ''
 }
 
 const handleSearch = () => {

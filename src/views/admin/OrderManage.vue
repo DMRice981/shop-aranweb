@@ -50,9 +50,9 @@ const loading = ref(false)
 const getList = async () => {
   loading.value = true
   try {
-    const res = await fetch('/api/order/list')
+    const res = await fetch('/api/order/list/all')
     const data = await res.json()
-    list.value = Array.isArray(data) ? data : []
+    list.value = data.data || (Array.isArray(data) ? data : [])
   } catch (e) {
     ElMessage.error('加载失败')
     list.value = []

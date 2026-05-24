@@ -14,8 +14,9 @@ import { ref, onMounted } from 'vue'
 const commentList = ref([])
 
 onMounted(async () => {
-  const res = await fetch('/api/goodsComment/list')
-  commentList.value = await res.json()
+  const res = await fetch('/api/comment/list')
+  const result = await res.json()
+  commentList.value = result.data || result
 })
 </script>
 

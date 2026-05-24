@@ -7,29 +7,36 @@
         <template #header>
           <div class="card-header">
             <span><el-icon><Document /></el-icon> 我的订单</span>
-            <el-button type="primary" plain @click="getOrderList" :loading="loading">
+            <el-button type="primary" plain @click="loadOrderList" :loading="loading">
               <el-icon><Refresh /></el-icon> 刷新
             </el-button>
           </div>
         </template>
 
-        <el-empty v-if="orderList.length === 0" description="暂无订单" />
+        <el-empty v-if="orderList.length === 0" description="暂无订单">
+          <el-button type="primary" @click="$router.push('/')">去购物</el-button>
+        </el-empty>
         
         <div v-else class="order-list">
           <div v-for="item in orderList" :key="item.id" class="order-item">
             <el-card>
               <div class="order-header">
                 <span class="order-no">订单号: {{ item.orderNo }}</span>
-                <el-tag :type="item.payStatus === 1 ? 'success' : 'warning'" size="large">
-                  {{ item.payStatus === 1 ? '已支付' : '待支付' }}
-                </el-tag>
+                <div class="order-tags">
+                  <el-tag :type="getPayStatusType(item.payStatus)" size="large">
+                    {{ getPayStatusText(item.payStatus) }}
+                  </el-tag>
+                  <el-tag :type="getOrderStatusType(item.orderStatus)" size="large">
+                    {{ getOrderStatusText(item.orderStatus) }}
+                  </el-tag>
+                </div>
               </div>
               
               <el-divider />
               
               <!-- 订单商品列表 -->
               <div class="order-goods">
-                <div v-for="orderItem in orderItemsMap[item.orderNo] || []" :key="orderItem.id" class="order-goods-item">
+                <div v-for="orderItem in getOrderItems(item.orderNo)" :key="orderItem.id" class="order-goods-item">
                   <el-image 
                     v-if="orderItem.goodsImg" 
                     :src="orderItem.goodsImg" 
@@ -50,20 +57,20 @@
               <el-divider />
               
               <div class="order-info">
-                <div class="info-row" v-if="addressMap[item.addressId]">
+                <div class="info-row" v-if="getAddress(item.addressId)">
                   <span class="label">收货信息:</span>
                   <span class="value">
-                    {{ addressMap[item.addressId].name }} 
-                    {{ addressMap[item.addressId].phone }}
+                    {{ getAddress(item.addressId).name }} 
+                    {{ getAddress(item.addressId).phone }}
                   </span>
                 </div>
-                <div class="info-row" v-if="addressMap[item.addressId]">
+                <div class="info-row" v-if="getAddress(item.addressId)">
                   <span class="label">收货地址:</span>
                   <span class="value">
-                    {{ addressMap[item.addressId].province }} 
-                    {{ addressMap[item.addressId].city }} 
-                    {{ addressMap[item.addressId].district }} 
-                    {{ addressMap[item.addressId].detail }}
+                    {{ getAddress(item.addressId).province }} 
+                    {{ getAddress(item.addressId).city }} 
+                    {{ getAddress(item.addressId).district }} 
+                    {{ getAddress(item.addressId).detail }}
                   </span>
                 </div>
                 <div class="info-row">
@@ -75,12 +82,8 @@
                   <span class="value price">¥{{ (item.payPrice || 0).toFixed(2) }}</span>
                 </div>
                 <div class="info-row">
-                  <span class="label">订单状态:</span>
-                  <span class="value">{{ getStatusText(item.orderStatus) }}</span>
-                </div>
-                <div class="info-row">
-                  <span class="label">创建时间:</span>
-                  <span class="value">{{ item.createTime || '-' }}</span>
+                  <span class="label">下单时间:</span>
+                  <span class="value">{{ formatDate(item.createTime) }}</span>
                 </div>
               </div>
 
@@ -88,13 +91,13 @@
                 <el-button v-if="item.payStatus !== 1" type="primary" @click="payOrder(item)">
                   <el-icon><CreditCard /></el-icon> 立即支付
                 </el-button>
-                <el-button v-if="item.orderStatus === 0 && item.payStatus === 1" type="primary" @click="confirmOrder(item)">
+                <el-button v-if="item.orderStatus === 0 && item.payStatus === 1" type="success" @click="confirmOrder(item)">
                   <el-icon><CircleCheck /></el-icon> 确认收货
                 </el-button>
                 <el-button type="danger" plain @click="cancelOrder(item)" v-if="item.orderStatus === 0 && item.payStatus === 0">
                   <el-icon><CircleClose /></el-icon> 取消订单
                 </el-button>
-                <el-button type="warning" @click="openAfterSaleDialog(item)">
+                <el-button type="warning" @click="openAfterSaleDialog(item)" v-if="item.orderStatus >= 2">
                   <el-icon><Service /></el-icon> 申请售后
                 </el-button>
               </div>
@@ -107,35 +110,25 @@
     <!-- 申请售后对话框 -->
     <el-dialog v-model="afterSaleDialogVisible" title="申请售后" width="500px">
       <el-form :model="afterSaleForm" label-width="100px">
-        <el-form-item label="订单ID">
-          <el-input-number 
-            v-model="afterSaleForm.orderId" 
-            disabled
-            style="width: 100%" 
-          />
+        <el-form-item label="订单号">
+          <el-input v-model="afterSaleForm.orderNo" disabled />
         </el-form-item>
-        <el-form-item label="商品ID">
-          <el-input-number 
-            v-model="afterSaleForm.goodsId" 
-            :min="1" 
-            style="width: 100%" 
-            placeholder="请输入要售后的商品ID" 
-          />
-        </el-form-item>
-        <el-form-item label="卖家ID">
-          <el-input-number 
-            v-model="afterSaleForm.sellerId" 
-            :min="1" 
-            style="width: 100%" 
-            placeholder="请输入卖家ID" 
-          />
+        <el-form-item label="选择商品">
+          <el-select v-model="afterSaleForm.goodsId" placeholder="请选择要售后的商品" style="width: 100%">
+            <el-option
+              v-for="item in afterSaleForm.orderItems"
+              :key="item.id"
+              :label="`${item.goodsName} × ${item.num}`"
+              :value="item.goodsId"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="售后原因">
           <el-input 
             v-model="afterSaleForm.reason" 
             type="textarea" 
             :rows="4" 
-            placeholder="请输入售后原因" 
+            placeholder="请详细描述您需要售后的原因" 
           />
         </el-form-item>
       </el-form>
@@ -153,6 +146,8 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { getOrderList as fetchOrderListAPI, updateOrder as updateOrderAPI } from '@/api/order'
+import { getAddressList } from '@/api/userAddress'
 
 const router = useRouter()
 const orderList = ref([])
@@ -163,54 +158,80 @@ const afterSaleDialogVisible = ref(false)
 const afterSaleSubmitting = ref(false)
 const afterSaleForm = ref({
   orderId: null,
+  orderNo: '',
+  orderItems: [],
   goodsId: null,
-  sellerId: null,
   reason: ''
 })
 const user = JSON.parse(localStorage.getItem('user') || 'null')
 
-const getStatusText = (status) => {
-  const map = ['待付款', '待发货', '待收货', '已完成', '已取消']
+const getPayStatusText = (status) => {
+  const map = {
+    0: '待支付',
+    1: '已支付'
+  }
+  return map[status] || '未知'
+}
+
+const getPayStatusType = (status) => {
+  return status === 1 ? 'success' : 'warning'
+}
+
+const getOrderStatusText = (status) => {
+  const map = {
+    0: '待发货',
+    1: '已发货',
+    2: '配送中',
+    3: '已完成',
+    4: '已取消'
+  }
   return map[status] || '未知状态'
 }
 
-const getOrderItems = async (orderNo) => {
-  if (orderItemsMap.value[orderNo]) {
-    return orderItemsMap.value[orderNo]
+const getOrderStatusType = (status) => {
+  const types = {
+    0: 'info',
+    1: 'primary',
+    2: 'warning',
+    3: 'success',
+    4: 'danger'
   }
-  
-  try {
-    const res = await fetch('/api/orderItem/list')
-    const data = await res.json()
-    const items = data.filter(item => item.orderNo === orderNo)
-    orderItemsMap.value[orderNo] = items
-    return items
-  } catch (error) {
-    console.error('加载订单项失败', error)
-    return []
-  }
+  return types[status] || 'info'
 }
 
-const getAddress = async (addressId) => {
-  if (addressMap.value[addressId]) {
-    return addressMap.value[addressId]
-  }
-  
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-'
+  const date = new Date(dateStr)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const getOrderItems = (orderNo) => {
+  return orderItemsMap.value[orderNo] || []
+}
+
+const getAddress = (addressId) => {
+  return addressMap.value[addressId] || null
+}
+
+const loadAddresses = async () => {
   try {
-    const res = await fetch('/api/userAddress/list')
-    const data = await res.json()
-    const address = data.find(a => a.id === addressId)
-    if (address) {
-      addressMap.value[addressId] = address
-    }
-    return address
+    const res = await getAddressList()
+    const addresses = res.data || res || []
+    addresses.forEach(addr => {
+      addressMap.value[addr.id] = addr
+    })
   } catch (error) {
     console.error('加载地址失败', error)
-    return null
   }
 }
 
-const getOrderList = async () => {
+const loadOrderList = async () => {
   if (!user) {
     ElMessage.warning('请先登录')
     router.push('/login')
@@ -219,18 +240,23 @@ const getOrderList = async () => {
 
   loading.value = true
   try {
-    const res = await fetch('/api/order/list')
-    const data = await res.json()
-    orderList.value = data.filter(o => o.userId === user.id)
+    const res = await fetchOrderListAPI(user.id)
+    const data = res.data || res || []
     
-    // 预加载订单项和地址
-    for (const order of orderList.value) {
-      await getOrderItems(order.orderNo)
-      if (order.addressId) {
-        await getAddress(order.addressId)
+    const orders = data.map(dto => dto.order || dto).filter(Boolean)
+    orderList.value = orders.filter(o => o.userId === user.id)
+    
+    const allOrderItems = data.flatMap(dto => dto.orderItems || [])
+    allOrderItems.forEach(item => {
+      if (!orderItemsMap.value[item.orderNo]) {
+        orderItemsMap.value[item.orderNo] = []
       }
-    }
+      orderItemsMap.value[item.orderNo].push(item)
+    })
+    
+    await loadAddresses()
   } catch (error) {
+    console.error('加载订单失败', error)
     ElMessage.error('加载订单失败')
   } finally {
     loading.value = false
@@ -239,23 +265,23 @@ const getOrderList = async () => {
 
 const payOrder = async (order) => {
   try {
-    await ElMessageBox.confirm(`确认支付 ¥${order.payPrice} ?`, '提示', {
+    await ElMessageBox.confirm(`确认支付 ¥${order.payPrice} ?`, '支付确认', {
       confirmButtonText: '确认支付',
       cancelButtonText: '取消',
       type: 'info'
     })
     
-    order.payStatus = 1
-    await fetch('/api/order/update', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order)
-    })
+    const updateData = {
+      ...order,
+      payStatus: 1
+    }
     
+    await updateOrderAPI(updateData)
     ElMessage.success('支付成功')
-    getOrderList()
+    await loadOrderList()
   } catch (error) {
     if (error !== 'cancel') {
+      console.error('支付失败', error)
       ElMessage.error('支付失败')
     }
   }
@@ -263,23 +289,23 @@ const payOrder = async (order) => {
 
 const confirmOrder = async (order) => {
   try {
-    await ElMessageBox.confirm('确认收货？', '提示', {
+    await ElMessageBox.confirm('确认收货？', '确认收货', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'info'
     })
     
-    order.orderStatus = 3
-    await fetch('/api/order/update', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order)
-    })
+    const updateData = {
+      ...order,
+      orderStatus: 3
+    }
     
+    await updateOrderAPI(updateData)
     ElMessage.success('收货成功')
-    getOrderList()
+    await loadOrderList()
   } catch (error) {
     if (error !== 'cancel') {
+      console.error('操作失败', error)
       ElMessage.error('操作失败')
     }
   }
@@ -287,23 +313,23 @@ const confirmOrder = async (order) => {
 
 const cancelOrder = async (order) => {
   try {
-    await ElMessageBox.confirm('确定取消订单？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm('确定取消订单？此操作不可恢复', '取消订单', {
+      confirmButtonText: '确定取消',
+      cancelButtonText: '返回',
       type: 'warning'
     })
     
-    order.orderStatus = 4
-    await fetch('/api/order/update', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order)
-    })
+    const updateData = {
+      ...order,
+      orderStatus: 4
+    }
     
+    await updateOrderAPI(updateData)
     ElMessage.success('订单已取消')
-    getOrderList()
+    await loadOrderList()
   } catch (error) {
     if (error !== 'cancel') {
+      console.error('取消失败', error)
       ElMessage.error('取消失败')
     }
   }
@@ -312,8 +338,9 @@ const cancelOrder = async (order) => {
 const openAfterSaleDialog = (order) => {
   afterSaleForm.value = {
     orderId: order.id,
+    orderNo: order.orderNo,
+    orderItems: getOrderItems(order.orderNo),
     goodsId: null,
-    sellerId: null,
     reason: ''
   }
   afterSaleDialogVisible.value = true
@@ -321,11 +348,7 @@ const openAfterSaleDialog = (order) => {
 
 const submitAfterSale = async () => {
   if (!afterSaleForm.value.goodsId) {
-    ElMessage.warning('请输入商品ID')
-    return
-  }
-  if (!afterSaleForm.value.sellerId) {
-    ElMessage.warning('请输入卖家ID')
+    ElMessage.warning('请选择要售后的商品')
     return
   }
   if (!afterSaleForm.value.reason) {
@@ -335,19 +358,30 @@ const submitAfterSale = async () => {
 
   afterSaleSubmitting.value = true
   try {
+    const orderItem = afterSaleForm.value.orderItems.find(item => item.goodsId === afterSaleForm.value.goodsId)
+    
     const applyData = {
-      ...afterSaleForm.value,
-      userId: user.id
+      orderId: afterSaleForm.value.orderId,
+      userId: user.id,
+      goodsId: afterSaleForm.value.goodsId,
+      reason: afterSaleForm.value.reason
     }
-    await fetch('/api/after-sale/apply', {
+    
+    const res = await fetch('/api/after-sale/add', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(applyData)
     })
-    ElMessage.success('售后申请成功')
-    afterSaleDialogVisible.value = false
-    router.push('/after-sale')
+    
+    if (res.ok) {
+      ElMessage.success('售后申请已提交')
+      afterSaleDialogVisible.value = false
+      router.push('/after-sale')
+    } else {
+      throw new Error('申请失败')
+    }
   } catch (error) {
+    console.error('售后申请失败', error)
     ElMessage.error('售后申请失败')
   } finally {
     afterSaleSubmitting.value = false
@@ -355,7 +389,7 @@ const submitAfterSale = async () => {
 }
 
 onMounted(() => {
-  getOrderList()
+  loadOrderList()
 })
 </script>
 
@@ -363,10 +397,11 @@ onMounted(() => {
 .order-page {
   min-height: 100vh;
   padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .order-container {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
@@ -391,12 +426,13 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   font-weight: 600;
+  font-size: 18px;
 }
 
 .order-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .order-item {
@@ -404,47 +440,63 @@ onMounted(() => {
 }
 
 .order-item:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
 }
 
 .order-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .order-no {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   color: #333;
+  font-family: monospace;
+}
+
+.order-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .order-info {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .order-goods {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .order-goods-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 8px;
+  gap: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #f0f2ff 100%);
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.order-goods-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .order-goods-item .goods-image {
-  width: 64px;
-  height: 64px;
-  border-radius: 8px;
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .order-goods-item .goods-info {
@@ -452,21 +504,21 @@ onMounted(() => {
 }
 
 .order-goods-item .goods-info h4 {
-  margin: 0 0 4px 0;
-  font-size: 14px;
+  margin: 0 0 8px 0;
+  font-size: 16px;
   font-weight: 600;
   color: #333;
 }
 
 .order-goods-item .goods-info p {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   color: #666;
 }
 
 .order-goods-item .goods-subtotal {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 800;
   color: #ff4757;
   flex-shrink: 0;
 }
@@ -474,12 +526,14 @@ onMounted(() => {
 .info-row {
   display: flex;
   gap: 12px;
+  align-items: flex-start;
 }
 
 .label {
   color: #666;
   font-size: 14px;
   min-width: 80px;
+  font-weight: 500;
 }
 
 .value {
@@ -490,21 +544,41 @@ onMounted(() => {
 
 .value.price {
   color: #ff4757;
-  font-weight: 700;
-  font-size: 18px;
+  font-weight: 800;
+  font-size: 20px;
 }
 
 .order-actions {
   display: flex;
   gap: 12px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px dashed #e5e7eb;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 768px) {
   .order-page {
     padding: 12px;
+  }
+  
+  .order-goods-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .order-goods-item .goods-image {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16/9;
+  }
+  
+  .order-actions {
+    flex-direction: column;
+  }
+  
+  .order-actions .el-button {
+    width: 100%;
   }
 }
 </style>

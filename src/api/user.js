@@ -1,42 +1,54 @@
 import request from '@/utils/request'
 
-// 登录
 export function login(data) {
-    return request.post('/user/login', data)
+  return request({
+    url: '/user/login',
+    method: 'post',
+    data
+  })
 }
 
-// 注册
 export function register(data) {
-    return request.post('/user/register', data)
+  return request({
+    url: '/user/register',
+    method: 'post',
+    data
+  })
 }
 
-// 获取当前用户信息
-export function getInfo() {
-    return request.get('/user/info')
-}
-
-// 退出登录
-export function logout() {
-    return request.post('/user/logout')
-}
-
-// 用户列表
 export function getUserList() {
-    return request.get('/user/list')
+  return request({
+    url: '/user/list',
+    method: 'get'
+  })
 }
 
 export function getUserById(id) {
-    return request.get(`/user/get/${id}`)
-}
-
-export function addUser(data) {
-    return request.post('/user/add', data)
+  return request({
+    url: '/user/get/' + id,
+    method: 'get'
+  })
 }
 
 export function updateUser(data) {
-    return request.put('/user/update', data)
+  return request({
+    url: '/user/update',
+    method: 'put',
+    data
+  })
 }
 
-export function delUser(id) {
-    return request.delete(`/user/delete/${id}`)
+export function deleteUser(id) {
+  return request({
+    url: '/user/delete/' + id,
+    method: 'delete'
+  })
+}
+
+export function updateUserStatus(id, status) {
+  return request({
+    url: '/user/status',
+    method: 'post',
+    params: { id, status }
+  })
 }

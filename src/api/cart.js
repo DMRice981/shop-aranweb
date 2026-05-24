@@ -1,17 +1,39 @@
 import request from '@/utils/request'
 
 export function getCartList(userId) {
-    return request.get(`/cart/list?userId=${userId}`)
+  return request({
+    url: '/cart/list',
+    method: 'get',
+    params: { userId }
+  })
 }
 
 export function addCart(data) {
-    return request.post('/cart/add', data)
+  return request({
+    url: '/cart/add',
+    method: 'post',
+    data
+  })
 }
 
 export function updateCart(data) {
-    return request.put('/cart/update', data)
+  return request({
+    url: '/cart/update',
+    method: 'put',
+    data
+  })
 }
 
 export function delCart(id) {
-    return request.delete(`/cart/delete/${id}`)
+  return request({
+    url: '/cart/delete/' + id,
+    method: 'delete'
+  })
+}
+
+export function clearCart(userId) {
+  return request({
+    url: '/cart/clear/' + userId,
+    method: 'delete'
+  })
 }

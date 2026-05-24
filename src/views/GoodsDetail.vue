@@ -63,7 +63,7 @@
               <div class="info-content">
                 <div class="info-label">库存状态</div>
                 <div class="info-value" :class="{ 'in-stock': info.stock > 0, 'out-stock': info.stock <= 0 }">
-                  {{ info.stock > 0 ? `仅剩 ' + info.stock + ' 件' : '暂时缺货' }}
+                  {{ info.stock > 0 ? '仅剩 ' + info.stock + ' 件' : '暂时缺货' }}
                 </div>
               </div>
             </div>

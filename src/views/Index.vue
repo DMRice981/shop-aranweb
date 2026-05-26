@@ -104,16 +104,16 @@
             :class="{ active: selectedCategory === null }"
             @click="filterByCategory(null)"
           >
-            全部商品
+            <el-icon><Grid /></el-icon> 全部商品
           </div>
           <div 
-            v-for="category in categories" 
+            v-for="category in topCategories" 
             :key="category.id"
             class="category-item"
             :class="{ active: selectedCategory === category.id }"
             @click="filterByCategory(category.id)"
           >
-            {{ category.categoryName }}
+            <el-icon><Folder /></el-icon> {{ category.name }}
           </div>
         </div>
       </div>
@@ -270,7 +270,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, ArrowDown, StarFilled } from '@element-plus/icons-vue'
+import { Search, ArrowDown, StarFilled, Grid, Folder } from '@element-plus/icons-vue'
 import { getGoodsList } from '@/api/goods'
 import { getCategoryList } from '@/api/category'
 import { getBannerList } from '@/api/banner'
@@ -321,10 +321,14 @@ const filteredGoods = computed(() => {
   return result
 })
 
+const topCategories = computed(() => {
+  return categories.value.filter(c => c.pid === 0 || c.pid === null)
+})
+
 const currentCategoryName = computed(() => {
   if (selectedCategory.value === null) return '全部商品'
   const category = categories.value.find(c => c.id === selectedCategory.value)
-  return category?.categoryName || '商品'
+  return category?.name || '商品'
 })
 
 onMounted(async () => {
@@ -386,7 +390,7 @@ const filterByCategory = (categoryId) => {
 
 const getCategoryName = (categoryId) => {
   const category = categories.value.find(c => c.id === categoryId)
-  return category?.name || category?.categoryName || ''
+  return category?.name || ''
 }
 
 const handleSearch = () => {

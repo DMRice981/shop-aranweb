@@ -20,7 +20,11 @@
       <el-table v-else :data="list" stripe style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="分类名称" />
-        <el-table-column prop="pid" label="父ID" width="100" />
+        <el-table-column label="父分类" width="150">
+          <template #default="{ row }">
+            {{ getParentName(row.pid) || '顶级分类' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="sort" label="排序" width="100" />
         <el-table-column label="操作">
           <template #default="{ row }">
@@ -43,12 +47,15 @@
         <el-form-item label="分类名称">
           <el-input v-model="form.name" placeholder="请输入分类名称" />
         </el-form-item>
-        <el-form-item label="父分类ID">
-          <el-input-number 
-            v-model="form.pid" 
-            :min="0" 
-            placeholder="请输入父分类ID" 
-            style="width: 100%" />
+        <el-form-item label="父分类">
+          <el-select v-model="form.pid" placeholder="请选择父分类">
+            <el-option label="顶级分类" :value="0" />
+            <el-option 
+              v-for="category in parentOptions" 
+              :key="category.id" 
+              :label="category.name" 
+              :value="category.id" />
+          </el-select>
         </el-form-item>
         <el-form-item label="排序">
           <el-input-number 
@@ -67,7 +74,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const list = ref([])
@@ -76,6 +83,16 @@ const saving = ref(false)
 const showForm = ref(false)
 const editId = ref(null)
 const form = ref({ name: '', pid: 0, sort: 0 })
+
+const parentOptions = computed(() => {
+  return list.value.filter(c => c.pid === 0 || c.pid === null)
+})
+
+const getParentName = (pid) => {
+  if (!pid || pid === 0) return ''
+  const parent = list.value.find(c => c.id === pid)
+  return parent?.name || ''
+}
 
 const getList = async () => {
   loading.value = true
@@ -94,7 +111,7 @@ const getList = async () => {
 const openForm = (row = null) => {
   if (row) {
     editId.value = row.id
-    form.value = { ...row }
+    form.value = { ...row, pid: row.pid || 0 }
   } else {
     editId.value = null
     form.value = { name: '', pid: 0, sort: 0 }
@@ -135,6 +152,12 @@ const save = async () => {
 }
 
 const del = async (id) => {
+  const hasChildren = list.value.some(c => c.pid === id)
+  if (hasChildren) {
+    ElMessage.warning('该分类下有子分类，无法删除')
+    return
+  }
+
   try {
     await ElMessageBox.confirm('确定要删除该分类吗？', '提示', {
       confirmButtonText: '确定',

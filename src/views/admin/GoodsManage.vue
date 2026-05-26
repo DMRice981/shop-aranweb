@@ -26,7 +26,18 @@
           </template>
         </el-table-column>
         <el-table-column prop="stock" label="库存" width="100" />
-        <el-table-column prop="categoryId" label="分类ID" width="100" />
+        <el-table-column label="分类" width="120">
+          <template #default="{ row }">
+            {{ getCategoryName(row.categoryId) || '未分类' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 1 ? 'success' : 'warning'">
+              {{ row.status === 1 ? '上架' : '下架' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="操作">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="openForm(row)">
@@ -43,10 +54,16 @@
     <el-dialog 
       v-model="showForm" 
       :title="editId ? '编辑商品' : '新增商品'" 
-      width="400px">
-      <el-form :model="form" label-width="80px">
+      width="500px">
+      <el-form :model="form" label-width="100px">
         <el-form-item label="商品名称">
           <el-input v-model="form.goodsName" placeholder="请输入商品名称" />
+        </el-form-item>
+        <el-form-item label="商品描述">
+          <el-input v-model="form.goodsDesc" placeholder="请输入商品描述" type="textarea" :rows="3" />
+        </el-form-item>
+        <el-form-item label="商品图片">
+          <el-input v-model="form.goodsImg" placeholder="请输入商品图片URL" />
         </el-form-item>
         <el-form-item label="价格">
           <el-input-number 
@@ -56,6 +73,14 @@
             placeholder="请输入价格" 
             style="width: 100%" />
         </el-form-item>
+        <el-form-item label="市场价">
+          <el-input-number 
+            v-model="form.marketPrice" 
+            :min="0" 
+            :precision="2" 
+            placeholder="请输入市场价" 
+            style="width: 100%" />
+        </el-form-item>
         <el-form-item label="库存">
           <el-input-number 
             v-model="form.stock" 
@@ -63,12 +88,21 @@
             placeholder="请输入库存" 
             style="width: 100%" />
         </el-form-item>
-        <el-form-item label="分类ID">
-          <el-input-number 
-            v-model="form.categoryId" 
-            :min="0" 
-            placeholder="请输入分类ID" 
-            style="width: 100%" />
+        <el-form-item label="分类">
+          <el-select v-model="form.categoryId" placeholder="请选择分类">
+            <el-option label="未分类" :value="0" />
+            <el-option 
+              v-for="category in categoryList" 
+              :key="category.id" 
+              :label="category.name" 
+              :value="category.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="form.status" placeholder="请选择状态">
+            <el-option label="上架" :value="1" />
+            <el-option label="下架" :value="0" />
+          </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -84,11 +118,12 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const list = ref([])
+const categoryList = ref([])
 const loading = ref(false)
 const saving = ref(false)
 const showForm = ref(false)
 const editId = ref(null)
-const form = ref({ goodsName: '', price: 0, stock: 0, categoryId: 0 })
+const form = ref({ goodsName: '', goodsDesc: '', goodsImg: '', price: 0, marketPrice: 0, stock: 0, categoryId: 0, status: 1 })
 
 const getList = async () => {
   loading.value = true
@@ -104,13 +139,32 @@ const getList = async () => {
   }
 }
 
+const loadCategories = async () => {
+  try {
+    const res = await fetch('/api/category/list')
+    const data = await res.json()
+    categoryList.value = data.data || (Array.isArray(data) ? data : [])
+  } catch (e) {
+    console.error('加载分类失败', e)
+  }
+}
+
+const getCategoryName = (categoryId) => {
+  const category = categoryList.value.find(c => c.id === categoryId)
+  return category?.name || ''
+}
+
 const openForm = (row = null) => {
   if (row) {
     editId.value = row.id
-    form.value = { ...row }
+    form.value = { 
+      ...row, 
+      categoryId: row.categoryId || 0,
+      status: row.status !== undefined ? row.status : 1
+    }
   } else {
     editId.value = null
-    form.value = { goodsName: '', price: 0, stock: 0, categoryId: 0 }
+    form.value = { goodsName: '', goodsDesc: '', goodsImg: '', price: 0, marketPrice: 0, stock: 0, categoryId: 0, status: 1 }
   }
   showForm.value = true
 }
@@ -164,7 +218,10 @@ const del = async (id) => {
   }
 }
 
-onMounted(getList)
+onMounted(async () => {
+  await loadCategories()
+  await getList()
+})
 </script>
 
 <style scoped>

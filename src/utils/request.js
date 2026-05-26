@@ -1,21 +1,50 @@
 import axios from 'axios'
+import { ElMessage } from 'element-plus'
 
 const request = axios.create({
     baseURL: import.meta.env.VITE_API_PREFIX || '/api',
     timeout: parseInt(import.meta.env.VITE_REQUEST_TIMEOUT) || 10000
 })
 
-// 响应拦截器：自动解包后端 Result<T> 包装，提取 data 字段
+request.interceptors.request.use(
+    config => {
+        const token = localStorage.getItem('token')
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`
+        }
+        return config
+    },
+    error => {
+        return Promise.reject(error)
+    }
+)
+
 request.interceptors.response.use(
     response => {
         const body = response.data
-        // 如果后端返回了 { code, msg, data } 结构，直接取 data
-        if (body && typeof body === 'object' && 'code' in body && 'data' in body) {
-            return body.data ?? body
+        if (body && typeof body === 'object') {
+            if (body.code === 401) {
+                localStorage.removeItem('token')
+                localStorage.removeItem('user')
+                ElMessage.error('登录已失效，请重新登录')
+                setTimeout(() => {
+                    window.location.href = '/login'
+                }, 1500)
+                return Promise.reject(new Error('登录已失效'))
+            }
+            if (body.code !== 200 && body.msg) {
+                ElMessage.error(body.msg)
+                return Promise.reject(new Error(body.msg))
+            }
+            if ('code' in body && 'data' in body) {
+                return body.data ?? body
+            }
         }
         return body
     },
     error => {
+        const message = error.response?.data?.msg || error.message || '网络请求失败'
+        ElMessage.error(message)
         return Promise.reject(error)
     }
 )

@@ -143,9 +143,13 @@ const form = ref({
 const getList = async () => {
   loading.value = true
   try {
-    const res = await fetch(`/api/goods/my?sellerId=${seller.id}`)
+    const res = await fetch(`/api/goods/my`)
     const data = await res.json()
-    list.value = data.data || []
+    if (data.code === 200) {
+      list.value = data.data || []
+    } else {
+      ElMessage.error(data.msg || '加载失败')
+    }
   } catch (error) {
     ElMessage.error('加载失败')
   } finally {
@@ -155,9 +159,14 @@ const getList = async () => {
 
 const setStatus = async (id, status) => {
   try {
-    await fetch(`/api/goods/status?id=${id}&status=${status}`, { method: 'POST' })
-    ElMessage.success('操作成功')
-    getList()
+    const res = await fetch(`/api/goods/status?id=${id}&status=${status}`, { method: 'POST' })
+    const data = await res.json()
+    if (data.code === 200) {
+      ElMessage.success('操作成功')
+      getList()
+    } else {
+      ElMessage.error(data.msg || '操作失败')
+    }
   } catch (error) {
     ElMessage.error('操作失败')
   }
@@ -207,29 +216,30 @@ const submitGoods = async () => {
 
   submitLoading.value = true
   try {
+    let res
     if (isEdit.value) {
       // 编辑商品
-      await fetch('/api/goods/update', {
+      res = await fetch('/api/goods/update', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form.value)
       })
-      ElMessage.success('编辑成功')
     } else {
-      // 新增商品 - 添加 sellerId
-      const goodsData = {
-        ...form.value,
-        sellerId: seller.id
-      }
-      await fetch('/api/goods/add', {
+      // 新增商品 - 不需要传sellerId，后端从Session获取
+      res = await fetch('/api/goods/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(goodsData)
+        body: JSON.stringify(form.value)
       })
-      ElMessage.success('新增成功')
     }
-    dialogVisible.value = false
-    getList()
+    const data = await res.json()
+    if (data.code === 200) {
+      ElMessage.success(isEdit.value ? '编辑成功' : '新增成功')
+      dialogVisible.value = false
+      getList()
+    } else {
+      ElMessage.error(data.msg || '操作失败')
+    }
   } catch (error) {
     ElMessage.error('操作失败')
   } finally {
@@ -245,11 +255,16 @@ const deleteGoods = async (row) => {
       type: 'warning'
     })
     
-    await fetch(`/api/goods/delete/${row.id}`, {
+    const res = await fetch(`/api/goods/delete/${row.id}`, {
       method: 'DELETE'
     })
-    ElMessage.success('删除成功')
-    getList()
+    const data = await res.json()
+    if (data.code === 200) {
+      ElMessage.success('删除成功')
+      getList()
+    } else {
+      ElMessage.error(data.msg || '删除失败')
+    }
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')

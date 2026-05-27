@@ -42,6 +42,18 @@
 
           <h1 class="product-title">{{ info.goodsName || info.goods_name || '精美商品' }}</h1>
 
+          <!-- 商家信息 -->
+          <div class="seller-card" v-if="sellerInfo">
+            <div class="seller-avatar">
+              <el-icon :size="40"><Shop /></el-icon>
+            </div>
+            <div class="seller-info">
+              <div class="seller-name">{{ sellerInfo.shopName || sellerInfo.shop_name || '商家店铺' }}</div>
+              <div class="seller-phone">联系电话：{{ sellerInfo.phone || '暂无' }}</div>
+            </div>
+            <el-button type="primary" plain size="small" class="enter-shop-btn">进入店铺</el-button>
+          </div>
+
           <div class="price-card">
             <div class="price-header">
               <span class="price-label">优惠价格</span>
@@ -174,14 +186,32 @@ import { ElMessage } from 'element-plus'
 const route = useRoute()
 const router = useRouter()
 const info = ref({})
+const sellerInfo = ref(null)
 const loading = ref(true)
 const quantity = ref(1)
+
+const loadSellerInfo = async (sellerId) => {
+  if (!sellerId) return
+  try {
+    const res = await fetch(`/api/seller/get/${sellerId}`)
+    const result = await res.json()
+    if (result.code === 200 && result.data) {
+      sellerInfo.value = result.data
+    }
+  } catch (error) {
+    console.log('加载商家信息失败')
+  }
+}
 
 onMounted(async () => {
   try {
     const res = await fetch(`/api/goods/get/${route.params.id}`)
     const result = await res.json()
     info.value = result.data || result
+    
+    if (info.value.sellerId) {
+      await loadSellerInfo(info.value.sellerId)
+    }
   } catch (error) {
     ElMessage.error('加载商品失败')
   } finally {
@@ -365,6 +395,51 @@ const increaseQuantity = () => {
   line-height: 1.3;
   margin: 0;
   letter-spacing: -0.5px;
+}
+
+/* 商家信息卡片 */
+.seller-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8f0ff 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.seller-avatar {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.seller-info {
+  flex: 1;
+}
+
+.seller-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.seller-phone {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.enter-shop-btn {
+  border-radius: 20px;
+  padding: 6px 16px;
+  height: 36px;
 }
 
 .price-card {
@@ -726,6 +801,15 @@ const increaseQuantity = () => {
 
   .price-card {
     padding: 20px;
+  }
+  
+  .seller-card {
+    flex-wrap: wrap;
+  }
+  
+  .enter-shop-btn {
+    width: 100%;
+    margin-top: 8px;
   }
 }
 </style>

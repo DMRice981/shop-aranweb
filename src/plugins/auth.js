@@ -7,6 +7,10 @@ export default {
   install(app) {
     const storage = {
       set(key, value) {
+        if (value === null || value === undefined) {
+          localStorage.removeItem(key)
+          return
+        }
         if (typeof value === 'object') {
           localStorage.setItem(key, JSON.stringify(value))
         } else {
@@ -15,9 +19,15 @@ export default {
       },
       get(key, defaultValue = null) {
         const value = localStorage.getItem(key)
-        if (!value) return defaultValue
+        if (!value || value === 'null' || value === 'undefined' || value.trim() === '') {
+          return defaultValue
+        }
         try {
-          return JSON.parse(value)
+          const parsed = JSON.parse(value)
+          if (parsed === null || parsed === undefined) {
+            return defaultValue
+          }
+          return parsed
         } catch {
           return value
         }
@@ -45,7 +55,12 @@ export default {
         storage.set(USER_KEY, user)
       },
       getUser() {
-        return storage.get(USER_KEY)
+        const user = storage.get(USER_KEY)
+        // 验证用户对象是否有效
+        if (user && typeof user === 'object' && user.id) {
+          return user
+        }
+        return null
       },
       removeUser() {
         storage.remove(USER_KEY)
@@ -77,6 +92,12 @@ export default {
         this.removeAdmin()
         this.removeSeller()
       }
+    }
+
+    // 初始化时清理无效的 user 数据
+    const currentUser = auth.getUser()
+    if (!currentUser) {
+      storage.remove(USER_KEY)
     }
 
     app.config.globalProperties.$storage = storage

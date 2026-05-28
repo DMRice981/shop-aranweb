@@ -68,18 +68,17 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const loading = ref(false)
+const http = inject('http')
 const form = ref({
   username: '',
   password: '',
-  phone: '',
-  status: 1,
-  isDelete: 0
+  phone: ''
 })
 
 const register = async () => {
@@ -90,19 +89,17 @@ const register = async () => {
 
   loading.value = true
   try {
-    const res = await fetch('/api/user/add', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form.value)
-    })
+    const result = await http.post('/user/register', form.value)
+    console.log('Register response:', result)
     
-    if (res.ok) {
+    if (result.code === 200) {
       ElMessage.success('注册成功，请登录')
       router.push('/login')
     } else {
-      ElMessage.error('注册失败')
+      ElMessage.error(result.msg || '注册失败')
     }
   } catch (error) {
+    console.error('Register error:', error)
     ElMessage.error('注册失败，请稍后重试')
   } finally {
     loading.value = false

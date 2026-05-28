@@ -143,13 +143,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getOrderList as fetchOrderListAPI, payOrder as payOrderAPI, confirmOrder as confirmOrderAPI, cancelOrder as cancelOrderAPI } from '@/api/order'
 import { getAddressList } from '@/api/userAddress'
 
 const router = useRouter()
+const auth = inject('auth')
+const http = inject('http')
+const user = ref(auth.getUser())
 const orderList = ref([])
 const orderItemsMap = ref({})
 const addressMap = ref({})
@@ -163,7 +166,6 @@ const afterSaleForm = ref({
   goodsId: null,
   reason: ''
 })
-const user = JSON.parse(localStorage.getItem('user') || 'null')
 
 const getPayStatusText = (status) => {
   const map = {
@@ -179,9 +181,9 @@ const getPayStatusType = (status) => {
 
 const getOrderStatusText = (status) => {
   const map = {
-    0: '待付款',   // 待发货 & 未支付
-    1: '待发货',   // 待发货 & 已支付
-    2: '已发货',   // 配送中
+    0: '待支付',
+    1: '待发货',
+    2: '已发货',
     3: '已完成',
     4: '已取消'
   }
@@ -190,11 +192,11 @@ const getOrderStatusText = (status) => {
 
 const getOrderStatusType = (status) => {
   const types = {
-    0: 'warning',  // 待付款 → 橙色警示
-    1: 'primary',  // 待发货 → 蓝色
-    2: 'info',     // 已发货 → 灰蓝
-    3: 'success',  // 已完成 → 绿色
-    4: 'danger'    // 已取消 → 红色
+    0: 'warning',
+    1: 'primary',
+    2: 'info',
+    3: 'success',
+    4: 'danger'
   }
   return types[status] || 'info'
 }
@@ -221,7 +223,7 @@ const getAddress = (addressId) => {
 
 const loadAddresses = async () => {
   try {
-    const res = await getAddressList(user?.id)
+    const res = await getAddressList(user.value?.id)
     const addresses = res.data || res || []
     addresses.forEach(addr => {
       addressMap.value[addr.id] = addr
@@ -232,7 +234,7 @@ const loadAddresses = async () => {
 }
 
 const loadOrderList = async () => {
-  if (!user) {
+  if (!user.value) {
     ElMessage.warning('请先登录')
     router.push('/login')
     return
@@ -240,15 +242,14 @@ const loadOrderList = async () => {
 
   loading.value = true
   try {
-    const res = await fetchOrderListAPI(user.id)
+    const res = await fetchOrderListAPI(user.value.id)
     const orders = res.data || res || []
     orderList.value = Array.isArray(orders) ? orders : []
 
     // 加载每个订单的订单项
     for (const order of orderList.value) {
       try {
-        const itemRes = await fetch(`/api/orderItem/list?orderId=${order.id}`)
-        const itemResult = await itemRes.json()
+        const itemResult = await http.get('/orderItem/list', { orderId: order.id })
         const items = itemResult.data || []
         orderItemsMap.value[order.id] = items
       } catch (e) {
@@ -349,7 +350,7 @@ const submitAfterSale = async () => {
     
     const applyData = {
       orderId: afterSaleForm.value.orderId,
-      userId: user.id,
+      userId: user.value.id,
       goodsId: afterSaleForm.value.goodsId,
       reason: afterSaleForm.value.reason
     }

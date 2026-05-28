@@ -84,15 +84,18 @@ const login = async () => {
   loading.value = true
   try {
     const result = await http.post('/user/login', form.value)
+    console.log('Login response:', result)
     
     if (result.code === 200) {
       auth.setUser(result.data)
+      console.log('User saved to auth:', auth.getUser())
       msg.success('登录成功')
       router.push('/')
     } else {
       msg.error(result.msg || '用户名或密码错误')
     }
   } catch (error) {
+    console.error('Login error:', error)
     msg.error('登录失败，请稍后重试')
   } finally {
     loading.value = false

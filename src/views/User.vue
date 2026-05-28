@@ -43,21 +43,24 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
-const user = JSON.parse(localStorage.getItem('user') || 'null')
+const auth = inject('auth')
+const user = ref(auth.getUser())
 
 const logout = () => {
-  localStorage.removeItem('user')
+  auth.logout()
+  user.value = null
   ElMessage.success('退出成功')
-  router.push('/login')
+  // 使用 reload 来确保所有组件状态都被重置
+  window.location.href = '/login'
 }
 
 onMounted(() => {
-  if (!user) {
+  if (!user.value) {
     ElMessage.warning('请先登录')
     router.push('/login')
   }

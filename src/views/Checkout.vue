@@ -143,11 +143,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
+const auth = inject('auth')
+const user = ref(auth.getUser())
+console.log('Checkout page - Initial user:', user.value)
 const checkoutItems = ref([])
 const addressList = ref([])
 const selectedAddressId = ref(null)
@@ -155,10 +158,8 @@ const showAddressDialog = ref(false)
 const submitting = ref(false)
 const goodsMap = ref({})
 
-const user = JSON.parse(localStorage.getItem('user') || 'null')
-
 const addressForm = ref({
-  userId: user?.id,
+  userId: user.value?.id,
   name: '',
   phone: '',
   province: '',
@@ -180,10 +181,11 @@ const getGoodsInfo = (goodsId) => {
   return goodsMap.value[goodsId]
 }
 
+const http = inject('http')
+
 const loadGoodsInfo = async () => {
   try {
-    const res = await fetch('/api/goods/list')
-    const result = await res.json()
+    const result = await http.get('/goods/list')
     const goodsList = result.data || result
     if (Array.isArray(goodsList)) {
       goodsList.forEach(g => {
@@ -206,11 +208,10 @@ const loadCheckoutItems = () => {
 }
 
 const loadAddressList = async () => {
-  if (!user) return
+  if (!user.value) return
   
   try {
-    const res = await fetch(`/api/address/list?userId=${user.id}`)
-    const result = await res.json()
+    const result = await http.get('/address/list', { userId: user.value.id })
     addressList.value = result.data || result
     
     if (addressList.value.length > 0) {
@@ -229,16 +230,12 @@ const saveAddress = async () => {
   }
   
   try {
-    await fetch('/api/address/add', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(addressForm.value)
-    })
+    await http.post('/address/add', addressForm.value)
     
     ElMessage.success('添加成功')
     showAddressDialog.value = false
     addressForm.value = {
-      userId: user?.id,
+      userId: user.value?.id,
       name: '',
       phone: '',
       province: '',
@@ -268,18 +265,12 @@ const submitOrder = async () => {
     }))
 
     const orderPayload = {
-      userId: user.id,
+      userId: user.value.id,
       addressId: selectedAddressId.value,
       goodsList
     }
     
-    const orderRes = await fetch('/api/order/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orderPayload)
-    })
-
-    const orderResult = await orderRes.json()
+    const orderResult = await http.post('/order/create', orderPayload)
     
     if (orderResult.code !== 200) {
       throw new Error(orderResult.msg || '订单创建失败')
@@ -288,7 +279,7 @@ const submitOrder = async () => {
     // 清空购物车中已结算的商品
     for (const item of checkoutItems.value) {
       if (item.id) {
-        await fetch(`/api/cart/delete/${item.id}`, { method: 'DELETE' })
+        await http.delete(`/cart/delete/${item.id}`)
       }
     }
     
@@ -304,7 +295,7 @@ const submitOrder = async () => {
 }
 
 onMounted(() => {
-  if (!user) {
+  if (!user.value) {
     ElMessage.warning('请先登录')
     router.push('/login')
     return

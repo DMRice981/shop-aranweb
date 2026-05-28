@@ -78,19 +78,19 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
+const auth = inject('auth')
+const user = ref(auth.getUser())
 const addressList = ref([])
 const showAddDialog = ref(false)
 const editId = ref(null)
 
-const user = JSON.parse(localStorage.getItem('user') || 'null')
-
 const addressForm = ref({
-  userId: user?.id,
+  userId: user.value?.id,
   name: '',
   phone: '',
   province: '',
@@ -102,7 +102,7 @@ const addressForm = ref({
 
 const getAddressList = async () => {
   try {
-    const res = await fetch(`/api/address/list?userId=${user?.id}`)
+    const res = await fetch(`/api/address/list?userId=${user.value?.id}`)
     const result = await res.json()
     addressList.value = result.data || result
   } catch (error) {
@@ -198,7 +198,7 @@ const deleteAddress = async (id) => {
 const resetForm = () => {
   editId.value = null
   addressForm.value = {
-    userId: user?.id,
+    userId: user.value?.id,
     name: '',
     phone: '',
     province: '',
@@ -210,7 +210,7 @@ const resetForm = () => {
 }
 
 onMounted(() => {
-  if (!user) {
+  if (!user.value) {
     ElMessage.warning('请先登录')
     router.push('/login')
     return

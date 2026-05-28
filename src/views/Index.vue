@@ -267,17 +267,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, ArrowDown, StarFilled, Grid, Folder } from '@element-plus/icons-vue'
-import { getGoodsList } from '@/api/goods'
-import { getCategoryList } from '@/api/category'
-import { getBannerList } from '@/api/banner'
-import { addCart, getCartList } from '@/api/cart'
+import { 
+  Search, ArrowDown, StarFilled, Grid, Folder, 
+  Shop, House, ShoppingCart, List, User, Service, 
+  Location, SwitchButton, Tools, Setting, Box, 
+  Picture, TrendCharts, View 
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
-const user = ref(JSON.parse(localStorage.getItem('user') || 'null'))
+const auth = inject('auth')
+const http = inject('http')
+const user = ref(auth.getUser())
 const goods = ref([])
 const categories = ref([])
 const banners = ref([])
@@ -345,7 +348,7 @@ onMounted(async () => {
 const loadGoods = async () => {
   loading.value = true
   try {
-    const res = await getGoodsList()
+    const res = await http.get('/goods/list')
     goods.value = res.data || res || []
   } catch (error) {
     console.error('加载商品失败', error)
@@ -357,7 +360,7 @@ const loadGoods = async () => {
 
 const loadCategories = async () => {
   try {
-    const res = await getCategoryList()
+    const res = await http.get('/category/list')
     categories.value = res.data || res || []
   } catch (error) {
     console.error('加载分类失败', error)
@@ -366,7 +369,7 @@ const loadCategories = async () => {
 
 const loadBanners = async () => {
   try {
-    const res = await getBannerList()
+    const res = await http.get('/banner/list')
     banners.value = res.data || res || []
   } catch (error) {
     console.error('加载轮播图失败', error)
@@ -376,7 +379,7 @@ const loadBanners = async () => {
 const loadCartCount = async () => {
   if (!user.value) return
   try {
-    const res = await getCartList(user.value.id)
+    const res = await http.get('/cart/list', { userId: user.value.id })
     const cartList = res.data || res || []
     cartCount.value = cartList.length
   } catch (error) {
@@ -413,10 +416,11 @@ const handleUserCommand = (command) => {
 }
 
 const logout = () => {
-  localStorage.removeItem('user')
+  auth.logout()
   user.value = null
   ElMessage.success('退出成功')
-  router.push('/')
+  // 使用 reload 来确保所有组件状态都被重置
+  window.location.href = '/'
 }
 
 const addToCart = async (item) => {
@@ -437,7 +441,7 @@ const addToCart = async (item) => {
   }
   
   try {
-    await addCart({
+    await http.post('/cart/add', {
       userId: user.value.id,
       goodsId: item.id,
       num: 1

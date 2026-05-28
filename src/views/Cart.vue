@@ -73,11 +73,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
+const auth = inject('auth')
+const user = ref(auth.getUser())
 const list = ref([])
 const goodsMap = ref({})
 
@@ -96,9 +98,10 @@ const selectedTotalPrice = computed(() =>
   list.value.filter(item => item.selected).reduce((sum, item) => sum + (item.price || 0) * item.num, 0)
 )
 
+const http = inject('http')
+
 const getList = async () => {
-  const user = JSON.parse(localStorage.getItem('user'))
-  if (!user) {
+  if (!user.value) {
     ElMessage.warning('请先登录')
     router.push('/login')
     return
@@ -106,8 +109,8 @@ const getList = async () => {
   
   try {
     const [cartsRes, goodsRes] = await Promise.all([
-      fetch(`/api/cart/list?userId=${user.id}`).then(r => r.json()),
-      fetch('/api/goods/list').then(r => r.json())
+      http.get('/cart/list', { userId: user.value.id }),
+      http.get('/goods/list')
     ])
     
     const goodsList = Array.isArray(goodsRes) ? goodsRes : (goodsRes.data || [])
@@ -133,11 +136,7 @@ const updateQuantity = async (item, delta) => {
   
   item.num = newNum
   try {
-    await fetch('/api/cart/update', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item)
-    })
+    await http.put('/cart/update', item)
     updateTotal()
   } catch (error) {
     ElMessage.error('更新数量失败')
@@ -153,7 +152,7 @@ const removeItem = async (id) => {
       type: 'warning'
     })
     
-    await fetch(`/api/cart/delete/${id}`, { method: 'DELETE' })
+    await http.delete(`/cart/delete/${id}`)
     list.value = list.value.filter(item => item.id !== id)
     ElMessage.success('删除成功')
   } catch (error) {
@@ -173,7 +172,7 @@ const clearSelected = async () => {
     
     const selectedIds = list.value.filter(item => item.selected).map(item => item.id)
     for (const id of selectedIds) {
-      await fetch(`/api/cart/delete/${id}`, { method: 'DELETE' })
+      await http.delete(`/cart/delete/${id}`)
     }
     list.value = list.value.filter(item => !item.selected)
     ElMessage.success('删除成功')

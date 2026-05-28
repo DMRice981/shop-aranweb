@@ -3,12 +3,14 @@
     <div class="menu">
       <div class="title">商家中心</div>
       <div class="item" :class="{active:page===0}" @click="page=0">商品管理</div>
-      <div class="item" :class="{active:page===1}" @click="page=1">售后管理</div>
+      <div class="item" :class="{active:page===1}" @click="page=1">订单管理</div>
+      <div class="item" :class="{active:page===2}" @click="page=2">售后管理</div>
       <div class="item logout" @click="logout">退出</div>
     </div>
     <div class="content">
       <SellerGoods v-if="page===0" />
-      <SellerAfterSale v-if="page===1" />
+      <SellerOrder v-if="page===1" />
+      <SellerAfterSale v-if="page===2" />
     </div>
   </div>
 </template>
@@ -17,6 +19,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import SellerGoods from './SellerGoods.vue'
+import SellerOrder from './SellerOrder.vue'
 import SellerAfterSale from './SellerAfterSale.vue'
 const router = useRouter()
 const page = ref(0)

@@ -179,12 +179,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
+const auth = inject('auth')
+const http = inject('http')
 const info = ref({})
 const sellerInfo = ref(null)
 const loading = ref(true)
@@ -193,8 +195,7 @@ const quantity = ref(1)
 const loadSellerInfo = async (sellerId) => {
   if (!sellerId) return
   try {
-    const res = await fetch(`/api/seller/get/${sellerId}`)
-    const result = await res.json()
+    const result = await http.get(`/seller/get/${sellerId}`)
     if (result.code === 200 && result.data) {
       sellerInfo.value = result.data
     }
@@ -205,8 +206,7 @@ const loadSellerInfo = async (sellerId) => {
 
 onMounted(async () => {
   try {
-    const res = await fetch(`/api/goods/get/${route.params.id}`)
-    const result = await res.json()
+    const result = await http.get(`/goods/get/${route.params.id}`)
     info.value = result.data || result
     
     if (info.value.sellerId) {
@@ -225,7 +225,7 @@ const addCart = async () => {
     return
   }
 
-  const user = JSON.parse(localStorage.getItem('user'))
+  const user = auth.getUser()
   if (!user) {
     ElMessage.warning('请先登录')
     router.push('/login')
@@ -238,14 +238,10 @@ const addCart = async () => {
   }
 
   try {
-    await fetch('/api/cart/add', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: user.id,
-        goodsId: route.params.id,
-        num: quantity.value
-      })
+    await http.post('/cart/add', {
+      userId: user.id,
+      goodsId: route.params.id,
+      num: quantity.value
     })
     ElMessage.success('加入购物车成功')
   } catch (error) {
@@ -259,7 +255,7 @@ const buyNow = () => {
     return
   }
 
-  const user = JSON.parse(localStorage.getItem('user'))
+  const user = auth.getUser()
   if (!user) {
     ElMessage.warning('请先登录')
     router.push('/login')
@@ -271,7 +267,18 @@ const buyNow = () => {
     return
   }
 
-  ElMessage.info('正在前往结算...')
+  // 构造临时结算项并跳转到结算页面
+  const checkoutItem = {
+    id: null,
+    goodsId: route.params.id,
+    num: quantity.value,
+    price: info.value.price,
+    selected: true
+  }
+  
+  localStorage.setItem('checkoutItems', JSON.stringify([checkoutItem]))
+  ElMessage.success('正在前往结算...')
+  router.push('/checkout')
 }
 
 const decreaseQuantity = () => {

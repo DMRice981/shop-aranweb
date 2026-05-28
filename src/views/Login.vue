@@ -2,7 +2,7 @@
   <div class="login-page">
     <div class="login-container">
       <el-card class="login-card" shadow="hover">
-        <div class="login-header">
+        <div class="login-header animate-fadeInUp">
           <div class="logo-section">
             <el-icon :size="48" color="#667eea"><Shop /></el-icon>
             <h1>Aran Shop</h1>
@@ -61,12 +61,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const loading = ref(false)
+const msg = inject('msg')
+const http = inject('http')
+const auth = inject('auth')
+
 const form = ref({
   username: '',
   password: ''
@@ -74,28 +77,23 @@ const form = ref({
 
 const login = async () => {
   if (!form.value.username || !form.value.password) {
-    ElMessage.warning('请输入用户名和密码')
+    msg.warning('请输入用户名和密码')
     return
   }
 
   loading.value = true
   try {
-    const res = await fetch('/api/user/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form.value)
-    })
-    const result = await res.json()
+    const result = await http.post('/user/login', form.value)
     
     if (result.code === 200) {
-      localStorage.setItem('user', JSON.stringify(result.data))
-      ElMessage.success('登录成功')
+      auth.setUser(result.data)
+      msg.success('登录成功')
       router.push('/')
     } else {
-      ElMessage.error(result.msg || '用户名或密码错误')
+      msg.error(result.msg || '用户名或密码错误')
     }
   } catch (error) {
-    ElMessage.error('登录失败，请稍后重试')
+    msg.error('登录失败，请稍后重试')
   } finally {
     loading.value = false
   }
@@ -162,12 +160,6 @@ const login = async () => {
   font-weight: 600;
   height: 48px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-}
-
-.login-button:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
 }
 
 .login-footer {

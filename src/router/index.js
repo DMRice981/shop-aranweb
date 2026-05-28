@@ -1,6 +1,53 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { ElMessage } from 'element-plus'
 
+class ProgressBar {
+  constructor() {
+    this.status = 'idle'
+    this.bar = null
+  }
+  
+  start() {
+    this.status = 'loading'
+    this.createBar()
+    if (this.bar) {
+      this.bar.style.width = '0%'
+      setTimeout(() => {
+        if (this.bar) {
+          this.bar.style.width = '30%'
+        }
+      }, 50)
+    }
+  }
+  
+  done() {
+    if (this.bar) {
+      this.bar.style.width = '100%'
+      setTimeout(() => {
+        this.removeBar()
+      }, 300)
+    }
+    this.status = 'idle'
+  }
+  
+  createBar() {
+    this.removeBar()
+    const bar = document.createElement('div')
+    bar.id = 'router-progress-bar'
+    document.body.appendChild(bar)
+    this.bar = bar
+  }
+  
+  removeBar() {
+    if (this.bar) {
+      this.bar.remove()
+      this.bar = null
+    }
+  }
+}
+
+const progressBar = new ProgressBar()
+
 const routes = [
     // 前台用户页面
     { path: '/', redirect: '/index' },
@@ -40,11 +87,20 @@ const routes = [
 
 const router = createRouter({
     history: createWebHistory(),
-    routes
+    routes,
+    scrollBehavior(to, from, savedPosition) {
+        if (savedPosition) {
+            return savedPosition
+        } else {
+            return { top: 0 }
+        }
+    }
 })
 
-// 路由守卫
+// 路由守卫 - 进度条 + 认证
 router.beforeEach((to, from, next) => {
+    progressBar.start()
+    
     // 设置页面标题
     if (to.meta.title) {
         document.title = to.meta.title + ' - Aran Shop'
@@ -55,6 +111,7 @@ router.beforeEach((to, from, next) => {
         const user = localStorage.getItem('user')
         if (!user) {
             ElMessage.warning('请先登录')
+            progressBar.done()
             next('/login')
             return
         }
@@ -65,6 +122,7 @@ router.beforeEach((to, from, next) => {
         const admin = localStorage.getItem('adminInfo')
         if (!admin) {
             ElMessage.warning('请先登录管理员账号')
+            progressBar.done()
             next('/admin/login')
             return
         }
@@ -75,12 +133,17 @@ router.beforeEach((to, from, next) => {
         const seller = localStorage.getItem('seller')
         if (!seller) {
             ElMessage.warning('请先登录商家账号')
+            progressBar.done()
             next('/seller/login')
             return
         }
     }
     
     next()
+})
+
+router.afterEach(() => {
+    progressBar.done()
 })
 
 export default router

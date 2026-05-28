@@ -146,8 +146,6 @@
 import { ref, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getOrderList as fetchOrderListAPI, payOrder as payOrderAPI, confirmOrder as confirmOrderAPI, cancelOrder as cancelOrderAPI } from '@/api/order'
-import { getAddressList } from '@/api/userAddress'
 
 const router = useRouter()
 const auth = inject('auth')
@@ -223,7 +221,7 @@ const getAddress = (addressId) => {
 
 const loadAddresses = async () => {
   try {
-    const res = await getAddressList(user.value?.id)
+    const res = await http.get('/userAddress/list', { userId: user.value?.id })
     const addresses = res.data || res || []
     addresses.forEach(addr => {
       addressMap.value[addr.id] = addr
@@ -242,7 +240,7 @@ const loadOrderList = async () => {
 
   loading.value = true
   try {
-    const res = await fetchOrderListAPI(user.value.id)
+    const res = await http.get('/order/list', { userId: user.value.id })
     const orders = res.data || res || []
     orderList.value = Array.isArray(orders) ? orders : []
 
@@ -274,7 +272,7 @@ const payOrder = async (order) => {
       type: 'info'
     })
     
-    await payOrderAPI(order.id)
+    await http.post(`/order/pay/${order.id}`)
     ElMessage.success('支付成功')
     await loadOrderList()
   } catch (error) {
@@ -293,7 +291,7 @@ const confirmOrder = async (order) => {
       type: 'info'
     })
     
-    await confirmOrderAPI(order.id)
+    await http.post(`/order/confirm/${order.id}`)
     ElMessage.success('收货成功')
     await loadOrderList()
   } catch (error) {
@@ -312,7 +310,7 @@ const cancelOrder = async (order) => {
       type: 'warning'
     })
     
-    await cancelOrderAPI(order.id)
+    await http.post(`/order/cancel/${order.id}`)
     ElMessage.success('订单已取消')
     await loadOrderList()
   } catch (error) {
@@ -355,19 +353,10 @@ const submitAfterSale = async () => {
       reason: afterSaleForm.value.reason
     }
     
-    const res = await fetch('/api/after-sale/add', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(applyData)
-    })
-    
-    if (res.ok) {
-      ElMessage.success('售后申请已提交')
-      afterSaleDialogVisible.value = false
-      router.push('/after-sale')
-    } else {
-      throw new Error('申请失败')
-    }
+    await http.post('/after-sale/add', applyData)
+    ElMessage.success('售后申请已提交')
+    afterSaleDialogVisible.value = false
+    router.push('/after-sale')
   } catch (error) {
     console.error('售后申请失败', error)
     ElMessage.error('售后申请失败')

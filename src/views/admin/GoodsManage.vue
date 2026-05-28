@@ -31,6 +31,17 @@
             {{ getCategoryName(row.categoryId) || '未分类' }}
           </template>
         </el-table-column>
+        <el-table-column label="商家" width="180">
+          <template #default="{ row }">
+            <div v-if="row.sellerId">
+              <div class="seller-info">
+                <span class="shop-name">{{ row.shopName || '未知店铺' }}</span>
+                <span class="seller-name">@{{ row.sellerName || '未知商家' }}</span>
+              </div>
+            </div>
+            <span v-else class="no-seller">无商家</span>
+          </template>
+        </el-table-column>
         <el-table-column label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'warning'">
@@ -98,6 +109,16 @@
               :value="category.id" />
           </el-select>
         </el-form-item>
+        <el-form-item label="商家">
+          <el-select v-model="form.sellerId" placeholder="请选择商家">
+            <el-option label="无商家" :value="null" />
+            <el-option 
+              v-for="seller in sellerList" 
+              :key="seller.id" 
+              :label="seller.shopName || seller.username" 
+              :value="seller.id" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="form.status" placeholder="请选择状态">
             <el-option label="上架" :value="1" />
@@ -114,22 +135,25 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Goods, Plus, Refresh } from '@element-plus/icons-vue'
+
+const http = inject('http')
 
 const list = ref([])
 const categoryList = ref([])
+const sellerList = ref([])
 const loading = ref(false)
 const saving = ref(false)
 const showForm = ref(false)
 const editId = ref(null)
-const form = ref({ goodsName: '', goodsDesc: '', goodsImg: '', price: 0, marketPrice: 0, stock: 0, categoryId: 0, status: 1 })
+const form = ref({ goodsName: '', goodsDesc: '', goodsImg: '', price: 0, marketPrice: 0, stock: 0, categoryId: 0, sellerId: null, status: 1 })
 
 const getList = async () => {
   loading.value = true
   try {
-    const res = await fetch('/api/goods/list/all')
-    const data = await res.json()
+    const data = await http.get('/goods/list/all')
     list.value = data.data || (Array.isArray(data) ? data : [])
   } catch (e) {
     ElMessage.error('加载失败')
@@ -141,11 +165,19 @@ const getList = async () => {
 
 const loadCategories = async () => {
   try {
-    const res = await fetch('/api/category/list')
-    const data = await res.json()
+    const data = await http.get('/category/list')
     categoryList.value = data.data || (Array.isArray(data) ? data : [])
   } catch (e) {
     console.error('加载分类失败', e)
+  }
+}
+
+const loadSellers = async () => {
+  try {
+    const data = await http.get('/seller/list')
+    sellerList.value = data.data || (Array.isArray(data) ? data : [])
+  } catch (e) {
+    console.error('加载商家失败', e)
   }
 }
 
@@ -160,11 +192,12 @@ const openForm = (row = null) => {
     form.value = { 
       ...row, 
       categoryId: row.categoryId || 0,
+      sellerId: row.sellerId || null,
       status: row.status !== undefined ? row.status : 1
     }
   } else {
     editId.value = null
-    form.value = { goodsName: '', goodsDesc: '', goodsImg: '', price: 0, marketPrice: 0, stock: 0, categoryId: 0, status: 1 }
+    form.value = { goodsName: '', goodsDesc: '', goodsImg: '', price: 0, marketPrice: 0, stock: 0, categoryId: 0, sellerId: null, status: 1 }
   }
   showForm.value = true
 }
@@ -178,18 +211,10 @@ const save = async () => {
   saving.value = true
   try {
     if (editId.value) {
-      await fetch('/api/goods/update', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form.value)
-      })
+      await http.put('/goods/update', form.value)
       ElMessage.success('修改成功')
     } else {
-      await fetch('/api/goods/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form.value)
-      })
+      await http.post('/goods/add', form.value)
       ElMessage.success('添加成功')
     }
     showForm.value = false
@@ -208,7 +233,7 @@ const del = async (id) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    await fetch(`/api/goods/delete/${id}`, { method: 'DELETE' })
+    await http.delete(`/goods/delete/${id}`)
     ElMessage.success('删除成功')
     getList()
   } catch (error) {
@@ -220,6 +245,7 @@ const del = async (id) => {
 
 onMounted(async () => {
   await loadCategories()
+  await loadSellers()
   await getList()
 })
 </script>
@@ -249,5 +275,27 @@ onMounted(async () => {
 .price {
   color: #ff4757;
   font-weight: 600;
+}
+
+.seller-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shop-name {
+  font-weight: 600;
+  color: #667eea;
+  font-size: 14px;
+}
+
+.seller-name {
+  font-size: 12px;
+  color: #909399;
+}
+
+.no-seller {
+  color: #909399;
+  font-style: italic;
 }
 </style>

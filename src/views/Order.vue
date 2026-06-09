@@ -7,13 +7,22 @@
         <template #header>
           <div class="card-header">
             <span><el-icon><Document /></el-icon> 我的订单</span>
-            <el-button type="primary" plain @click="loadOrderList" :loading="loading">
-              <el-icon><Refresh /></el-icon> 刷新
-            </el-button>
+            <div class="header-actions">
+              <el-button-group>
+                <el-button :type="statusFilter === null ? 'primary' : ''" size="small" @click="statusFilter = null; loadOrderList()">全部</el-button>
+                <el-button :type="statusFilter === 0 ? 'primary' : ''" size="small" @click="statusFilter = 0; loadOrderList()">待支付</el-button>
+                <el-button :type="statusFilter === 1 ? 'primary' : ''" size="small" @click="statusFilter = 1; loadOrderList()">待发货</el-button>
+                <el-button :type="statusFilter === 2 ? 'primary' : ''" size="small" @click="statusFilter = 2; loadOrderList()">已发货</el-button>
+                <el-button :type="statusFilter === 3 ? 'primary' : ''" size="small" @click="statusFilter = 3; loadOrderList()">已完成</el-button>
+              </el-button-group>
+              <el-button type="primary" plain @click="loadOrderList" :loading="loading" size="small">
+                <el-icon><Refresh /></el-icon> 刷新
+              </el-button>
+            </div>
           </div>
         </template>
 
-        <el-empty v-if="orderList.length === 0" description="暂无订单">
+        <el-empty v-if="orderList.length === 0 && !loading" description="暂无订单">
           <el-button type="primary" @click="$router.push('/')">去购物</el-button>
         </el-empty>
         
@@ -104,6 +113,19 @@
             </el-card>
           </div>
         </div>
+
+        <!-- 分页 -->
+        <div class="pagination" v-if="total > 0">
+          <el-pagination
+            v-model:current-page="pageNum"
+            v-model:page-size="pageSize"
+            :page-sizes="[5, 10, 20]"
+            :total="total"
+            layout="total, sizes, prev, pager, next, jumper"
+            @size-change="loadOrderList"
+            @current-change="loadOrderList"
+          />
+        </div>
       </el-card>
     </div>
 
@@ -157,6 +179,13 @@ const addressMap = ref({})
 const loading = ref(false)
 const afterSaleDialogVisible = ref(false)
 const afterSaleSubmitting = ref(false)
+
+// 分页和筛选
+const pageNum = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const statusFilter = ref(null)
+
 const afterSaleForm = ref({
   orderId: null,
   orderNo: '',
@@ -240,9 +269,16 @@ const loadOrderList = async () => {
 
   loading.value = true
   try {
-    const res = await http.get('/order/list', { userId: user.value.id })
-    const orders = res.data || res || []
+    const params = {
+      pageNum: pageNum.value,
+      pageSize: pageSize.value,
+      userId: user.value.id,
+      status: statusFilter.value
+    }
+    const res = await http.get('/order/list/paged', params)
+    const orders = res.data?.list || res.data || []
     orderList.value = Array.isArray(orders) ? orders : []
+    total.value = res.data?.total || 0
 
     // 加载每个订单的订单项
     for (const order of orderList.value) {
@@ -254,7 +290,7 @@ const loadOrderList = async () => {
         console.error(`加载订单 ${order.id} 的订单项失败`, e)
       }
     }
-    
+
     await loadAddresses()
   } catch (error) {
     console.error('加载订单失败', error)
@@ -404,6 +440,21 @@ onMounted(() => {
   align-items: center;
   font-weight: 600;
   font-size: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
 }
 
 .order-list {

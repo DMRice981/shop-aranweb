@@ -8,16 +8,33 @@
             <el-button type="primary" @click="openAddDialog">
               <el-icon><Plus /></el-icon> 新增商品
             </el-button>
-            <el-button @click="getList" :loading="loading">
+            <el-button @click="loadList" :loading="loading">
               <el-icon><Refresh /></el-icon> 刷新
             </el-button>
           </div>
         </div>
       </template>
+
+      <!-- 搜索框 -->
+      <div class="filter-bar">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索商品名称或描述..."
+          size="default"
+          style="width: 300px"
+          clearable
+          @keyup.enter="loadList"
+          @clear="loadList"
+        >
+          <template #append>
+            <el-button :icon="Search" @click="loadList" />
+          </template>
+        </el-input>
+      </div>
       
-      <el-empty v-if="list.length === 0" description="暂无商品" />
+      <el-empty v-if="list.length === 0 && !loading" description="暂无商品" />
       
-      <el-table v-else :data="list" stripe style="width: 100%">
+      <el-table v-else :data="list" stripe style="width: 100%" v-loading="loading">
         <el-table-column prop="goodsName" label="商品名" />
         <el-table-column prop="price" label="价格" width="120">
           <template #default="{ row }">
@@ -64,6 +81,19 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination" v-if="total > 0">
+        <el-pagination
+          v-model:current-page="pageNum"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="loadList"
+          @current-change="loadList"
+        />
+      </div>
     </el-card>
 
     <!-- 新增/编辑商品对话框 -->
@@ -120,15 +150,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search } from '@element-plus/icons-vue'
+
+const http = inject('http')
 
 const list = ref([])
 const loading = ref(false)
 const submitLoading = ref(false)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
-const seller = JSON.parse(localStorage.getItem('seller')||'{}')
+const seller = ref(null)
+
+// 分页和搜索
+const pageNum = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const searchKeyword = ref('')
 
 const form = ref({
   id: null,
@@ -140,18 +179,25 @@ const form = ref({
   goodsDesc: ''
 })
 
-const getList = async () => {
+const loadList = async () => {
   loading.value = true
   try {
-    const res = await fetch(`/api/goods/my`)
-    const data = await res.json()
+    const params = {
+      pageNum: pageNum.value,
+      pageSize: pageSize.value,
+      keyword: searchKeyword.value || undefined
+    }
+    const data = await http.get('/goods/my/paged', params)
     if (data.code === 200) {
-      list.value = data.data || []
+      list.value = data.data.list || []
+      total.value = data.data.total || 0
     } else {
       ElMessage.error(data.msg || '加载失败')
+      list.value = []
     }
   } catch (error) {
     ElMessage.error('加载失败')
+    list.value = []
   } finally {
     loading.value = false
   }
@@ -159,11 +205,11 @@ const getList = async () => {
 
 const setStatus = async (id, status) => {
   try {
-    const res = await fetch(`/api/goods/status?id=${id}&status=${status}`, { method: 'POST' })
-    const data = await res.json()
+    const res = await http.post(`/goods/status?id=${id}&status=${status}`)
+    const data = res
     if (data.code === 200) {
       ElMessage.success('操作成功')
-      getList()
+      loadList()
     } else {
       ElMessage.error(data.msg || '操作失败')
     }
@@ -219,26 +265,17 @@ const submitGoods = async () => {
     let res
     if (isEdit.value) {
       // 编辑商品
-      res = await fetch('/api/goods/update', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form.value)
-      })
+      res = await http.put('/goods/update', form.value)
     } else {
-      // 新增商品 - 不需要传sellerId，后端从Session获取
-      res = await fetch('/api/goods/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form.value)
-      })
+      // 新增商品
+      res = await http.post('/goods/add', form.value)
     }
-    const data = await res.json()
-    if (data.code === 200) {
+    if (res.code === 200) {
       ElMessage.success(isEdit.value ? '编辑成功' : '新增成功')
       dialogVisible.value = false
-      getList()
+      loadList()
     } else {
-      ElMessage.error(data.msg || '操作失败')
+      ElMessage.error(res.msg || '操作失败')
     }
   } catch (error) {
     ElMessage.error('操作失败')
@@ -255,15 +292,12 @@ const deleteGoods = async (row) => {
       type: 'warning'
     })
     
-    const res = await fetch(`/api/goods/delete/${row.id}`, {
-      method: 'DELETE'
-    })
-    const data = await res.json()
-    if (data.code === 200) {
+    const res = await http.delete(`/goods/delete/${row.id}`)
+    if (res.code === 200) {
       ElMessage.success('删除成功')
-      getList()
+      loadList()
     } else {
-      ElMessage.error(data.msg || '删除失败')
+      ElMessage.error(res.msg || '删除失败')
     }
   } catch (error) {
     if (error !== 'cancel') {
@@ -272,7 +306,10 @@ const deleteGoods = async (row) => {
   }
 }
 
-onMounted(getList)
+onMounted(() => {
+  seller.value = JSON.parse(localStorage.getItem('seller') || '{}')
+  loadList()
+})
 </script>
 
 <style scoped>
@@ -295,6 +332,21 @@ onMounted(getList)
 .header-actions {
   display: flex;
   gap: 12px;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f5f7fa;
+  border-radius: 8px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
 }
 
 .price {

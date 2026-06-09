@@ -6,20 +6,33 @@
           <span><el-icon><Document /></el-icon> 订单管理</span>
           <div class="filter-buttons">
             <el-button-group>
-              <el-button :type="statusFilter === null ? 'primary' : ''" @click="statusFilter = null">全部</el-button>
-              <el-button :type="statusFilter === 0 ? 'primary' : ''" @click="statusFilter = 0">待支付</el-button>
-              <el-button :type="statusFilter === 1 ? 'primary' : ''" @click="statusFilter = 1">待发货</el-button>
-              <el-button :type="statusFilter === 2 ? 'primary' : ''" @click="statusFilter = 2">已发货</el-button>
-              <el-button :type="statusFilter === 3 ? 'primary' : ''" @click="statusFilter = 3">已完成</el-button>
+              <el-button :type="statusFilter === null ? 'primary' : ''" @click="statusFilter = null; loadList()">全部</el-button>
+              <el-button :type="statusFilter === 0 ? 'primary' : ''" @click="statusFilter = 0; loadList()">待支付</el-button>
+              <el-button :type="statusFilter === 1 ? 'primary' : ''" @click="statusFilter = 1; loadList()">待发货</el-button>
+              <el-button :type="statusFilter === 2 ? 'primary' : ''" @click="statusFilter = 2; loadList()">已发货</el-button>
+              <el-button :type="statusFilter === 3 ? 'primary' : ''" @click="statusFilter = 3; loadList()">已完成</el-button>
             </el-button-group>
-            <el-button @click="getList()" :loading="loading">
+            <el-input
+              v-model="searchKeyword"
+              placeholder="搜索订单号..."
+              size="default"
+              style="width: 200px"
+              clearable
+              @keyup.enter="loadList"
+              @clear="loadList"
+            >
+              <template #append>
+                <el-button :icon="Search" @click="loadList" />
+              </template>
+            </el-input>
+            <el-button @click="loadList()" :loading="loading">
               <el-icon><Refresh /></el-icon> 刷新
             </el-button>
           </div>
         </div>
       </template>
       
-      <el-empty v-if="list.length === 0" description="暂无订单" />
+      <el-empty v-if="list.length === 0 && !loading" description="暂无订单" />
       
       <el-table v-else :data="list" stripe style="width: 100%" v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
@@ -59,6 +72,19 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination" v-if="total > 0">
+        <el-pagination
+          v-model:current-page="pageNum"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="loadList"
+          @current-change="loadList"
+        />
+      </div>
     </el-card>
 
     <!-- 订单详情弹窗 -->
@@ -115,7 +141,7 @@
 <script setup>
 import { ref, onMounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Document, Refresh, Van, View } from '@element-plus/icons-vue'
+import { Document, Refresh, Van, View, Search } from '@element-plus/icons-vue'
 
 const http = inject('http')
 const list = ref([])
@@ -124,6 +150,12 @@ const statusFilter = ref(null)
 const detailVisible = ref(false)
 const currentOrder = ref(null)
 const orderItems = ref([])
+
+// 分页和搜索
+const pageNum = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const searchKeyword = ref('')
 
 const getStatusText = (status) => {
   const map = {
@@ -147,15 +179,23 @@ const getStatusType = (status) => {
   return map[status] || 'info'
 }
 
-const getList = async () => {
+const loadList = async () => {
   loading.value = true
   try {
-    let url = '/order/list/all'
-    if (statusFilter.value !== null) {
-      url += '?status=' + statusFilter.value
+    const params = {
+      pageNum: pageNum.value,
+      pageSize: pageSize.value,
+      status: statusFilter.value,
+      keyword: searchKeyword.value || undefined
     }
-    const data = await http.get(url)
-    list.value = data.data || []
+    const data = await http.get('/order/list/all/paged', params)
+    if (data.code === 200) {
+      list.value = data.data.list || []
+      total.value = data.data.total || 0
+    } else {
+      ElMessage.error(data.msg || '加载失败')
+      list.value = []
+    }
   } catch (e) {
     console.error('加载失败', e)
     ElMessage.error('加载失败')
@@ -191,7 +231,7 @@ const handleSend = async (row) => {
         if (data.code === 200) {
           ElMessage.success('发货成功')
           detailVisible.value = false
-          getList()
+          loadList()
         } else {
           ElMessage.error(data.msg || '发货失败')
         }
@@ -210,7 +250,7 @@ const del = async (id) => {
     })
     await http.delete('/order/delete/' + id)
     ElMessage.success('删除成功')
-    getList()
+    loadList()
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')
@@ -218,7 +258,7 @@ const del = async (id) => {
   }
 }
 
-onMounted(getList)
+onMounted(loadList)
 </script>
 
 <style scoped>
@@ -242,6 +282,13 @@ onMounted(getList)
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
 }
 
 .price {

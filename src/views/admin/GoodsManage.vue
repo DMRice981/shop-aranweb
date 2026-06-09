@@ -8,16 +8,38 @@
             <el-button type="primary" @click="openForm()">
               <el-icon><Plus /></el-icon> 新增商品
             </el-button>
-            <el-button @click="getList()" :loading="loading">
+            <el-button @click="loadList()" :loading="loading">
               <el-icon><Refresh /></el-icon> 刷新
             </el-button>
           </div>
         </div>
       </template>
+
+      <!-- 搜索和筛选 -->
+      <div class="filter-bar">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索商品名称或描述..."
+          size="default"
+          style="width: 300px"
+          clearable
+          @keyup.enter="loadList"
+          @clear="loadList"
+        >
+          <template #append>
+            <el-button :icon="Search" @click="loadList" />
+          </template>
+        </el-input>
+        <el-select v-model="filterStatus" placeholder="商品状态" clearable style="width: 150px" @change="loadList">
+          <el-option label="全部" :value="null" />
+          <el-option label="上架" :value="1" />
+          <el-option label="下架" :value="0" />
+        </el-select>
+      </div>
       
-      <el-empty v-if="list.length === 0" description="暂无商品" />
+      <el-empty v-if="list.length === 0 && !loading" description="暂无商品" />
       
-      <el-table v-else :data="list" stripe style="width: 100%">
+      <el-table v-else :data="list" stripe style="width: 100%" v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="goodsName" label="商品名称" />
         <el-table-column prop="price" label="价格" width="120">
@@ -60,6 +82,19 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination" v-if="total > 0">
+        <el-pagination
+          v-model:current-page="pageNum"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="loadList"
+          @current-change="loadList"
+        />
+      </div>
     </el-card>
 
     <el-dialog 
@@ -137,7 +172,7 @@
 <script setup>
 import { ref, onMounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Goods, Plus, Refresh } from '@element-plus/icons-vue'
+import { Goods, Plus, Refresh, Search } from '@element-plus/icons-vue'
 
 const http = inject('http')
 
@@ -150,11 +185,30 @@ const showForm = ref(false)
 const editId = ref(null)
 const form = ref({ goodsName: '', goodsDesc: '', goodsImg: '', price: 0, marketPrice: 0, stock: 0, categoryId: 0, sellerId: null, status: 1 })
 
-const getList = async () => {
+// 分页和搜索
+const pageNum = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const searchKeyword = ref('')
+const filterStatus = ref(null)
+
+const loadList = async () => {
   loading.value = true
   try {
-    const data = await http.get('/goods/list/all')
-    list.value = data.data || (Array.isArray(data) ? data : [])
+    const params = {
+      pageNum: pageNum.value,
+      pageSize: pageSize.value,
+      keyword: searchKeyword.value || undefined,
+      status: filterStatus.value
+    }
+    const data = await http.get('/goods/list/all/paged', params)
+    if (data.code === 200) {
+      list.value = data.data.list || []
+      total.value = data.data.total || 0
+    } else {
+      ElMessage.error(data.msg || '加载失败')
+      list.value = []
+    }
   } catch (e) {
     ElMessage.error('加载失败')
     list.value = []
@@ -218,7 +272,7 @@ const save = async () => {
       ElMessage.success('添加成功')
     }
     showForm.value = false
-    getList()
+    loadList()
   } catch (e) {
     ElMessage.error('操作失败')
   } finally {
@@ -235,7 +289,7 @@ const del = async (id) => {
     })
     await http.delete(`/goods/delete/${id}`)
     ElMessage.success('删除成功')
-    getList()
+    loadList()
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')
@@ -246,7 +300,7 @@ const del = async (id) => {
 onMounted(async () => {
   await loadCategories()
   await loadSellers()
-  await getList()
+  await loadList()
 })
 </script>
 
@@ -270,6 +324,21 @@ onMounted(async () => {
 .actions {
   display: flex;
   gap: 10px;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f5f7fa;
+  border-radius: 8px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
 }
 
 .price {

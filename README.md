@@ -111,8 +111,18 @@ auth.isLoggedIn()
 const http = inject('http')
 
 // GET 请求
+// 重要：值为 null / undefined / '' 的参数会被自动过滤，不会发送到后端
+// 这可以避免后端出现 "Failed to convert value of type 'java.lang.String' to required type 'java.lang.Integer'" 错误
 const data = await http.get('/goods/list')
-const data = await http.get('/goods/list', { categoryId: 1 })
+// 分页 + 关键词搜索示例
+const filterStatus = ref('') // 使用空字符串表示全部，而非 null
+const searchKeyword = ref('')
+const pagedData = await http.get('/goods/list/all/paged', {
+  pageNum: 1,
+  pageSize: 10,
+  keyword: searchKeyword.value || undefined, // 空字符串 → undefined → 被过滤
+  status: filterStatus.value !== '' ? filterStatus.value : undefined
+})
 
 // POST 请求
 const result = await http.post('/cart/add', { userId: 1, goodsId: 1, num: 1 })
@@ -258,14 +268,21 @@ const user = JSON.parse(localStorage.getItem('user'))
 ### 4. 图标使用规范
 
 ```javascript
-// 在 script setup 中导入
-import { Search, Plus, Delete } from '@element-plus/icons-vue'
+// 在 script setup 中导入（使用别名避免与其他组件重名）
+import { Search as IconSearch, Plus as IconPlus, Delete as IconDelete } from '@element-plus/icons-vue'
 
-// 在模板中使用
-<el-icon><Search /></el-icon>
-<el-icon><Plus /></el-icon>
-<el-icon><Delete /></el-icon>
+// 在模板中使用动态组件引用（推荐，避免命名冲突）
+<el-icon><component :is="IconSearch" /></el-icon>
+<el-icon><component :is="IconPlus" /></el-icon>
+<el-icon><component :is="IconDelete" /></el-icon>
 ```
+
+**注意事项**：
+- 只使用 `@element-plus/icons-vue` 包中实际存在的图标导出名称
+  - ❌ 不要使用：`Shield`、`Truck`（包中不存在，会导致编译失败）
+  - ✅ 推荐替代：`Medal`、`Van` 等
+- 在 `el-input` 的 `prefix-icon` 属性中绑定组件引用：`:prefix-icon="IconSearch"`
+- 列表筛选中的 "全部" 选项使用 `value=""` 代替 `:value="null"`，`http.get()` 会自动过滤空值参数
 
 ## 📊 订单状态说明
 

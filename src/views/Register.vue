@@ -16,7 +16,7 @@
               v-model="form.username"
               placeholder="请输入用户名"
               size="large"
-              prefix-icon="User"
+              :prefix-icon="IconUser"
             />
           </el-form-item>
           <el-form-item>
@@ -25,7 +25,7 @@
               type="password"
               placeholder="请输入密码"
               size="large"
-              prefix-icon="Lock"
+              :prefix-icon="IconLock"
               show-password
             />
           </el-form-item>
@@ -34,7 +34,7 @@
               v-model="form.phone"
               placeholder="请输入手机号"
               size="large"
-              prefix-icon="Phone"
+              :prefix-icon="IconPhone"
             />
           </el-form-item>
           <el-form-item>
@@ -45,7 +45,7 @@
               :loading="loading"
               @click="register"
             >
-              <el-icon><EditPen /></el-icon>
+              <el-icon><component :is="IconEditPen" /></el-icon>
               注册
             </el-button>
           </el-form-item>
@@ -58,7 +58,7 @@
 
         <div class="back-home">
           <el-button link @click="$router.push('/')">
-            <el-icon><ArrowLeft /></el-icon>
+            <el-icon><component :is="IconArrowLeft" /></el-icon>
             返回首页
           </el-button>
         </div>
@@ -71,6 +71,13 @@
 import { ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import {
+  User as IconUser,
+  Lock as IconLock,
+  Phone as IconPhone,
+  EditPen as IconEditPen,
+  ArrowLeft as IconArrowLeft
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const loading = ref(false)

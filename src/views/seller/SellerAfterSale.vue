@@ -3,7 +3,7 @@
     <el-card class="after-sale-card" shadow="hover">
       <template #header>
         <div class="header">
-          <span><el-icon><Service /></el-icon> 售后管理</span>
+          <span><el-icon><component :is="IconService" /></el-icon> 售后管理</span>
           <div class="header-stats">
             <el-tag type="warning" size="large">
               待处理: {{ pendingCount }}
@@ -13,7 +13,7 @@
             </el-tag>
           </div>
           <el-button type="primary" @click="getList" :loading="loading">
-            <el-icon><Refresh /></el-icon> 刷新
+            <el-icon><component :is="IconRefresh" /></el-icon> 刷新
           </el-button>
         </div>
       </template>
@@ -59,7 +59,7 @@
                 
                 <div class="action-section">
                   <el-button type="primary" size="large" @click="handleAfterSale(item)">
-                    <el-icon><Check /></el-icon> 处理售后
+                    <el-icon><component :is="IconCheck" /></el-icon> 处理售后
                   </el-button>
                 </div>
               </div>
@@ -217,7 +217,7 @@
       <template #footer>
         <el-button @click="handleDialogVisible = false">取消</el-button>
         <el-button type="success" @click="confirmHandle" :loading="handleLoading">
-          <el-icon><Check /></el-icon> 确认处理
+          <el-icon><component :is="IconCheck" /></el-icon> 确认处理
         </el-button>
       </template>
     </el-dialog>
@@ -272,6 +272,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  Service as IconService,
+  Refresh as IconRefresh,
+  Check as IconCheck
+} from '@element-plus/icons-vue'
 
 const list = ref([])
 const loading = ref(false)

@@ -3,13 +3,13 @@
     <el-card class="manage-card" shadow="hover">
       <template #header>
         <div class="header">
-          <span><el-icon><Goods /></el-icon> 商品管理</span>
+          <span><el-icon><component :is="IconGoods" /></el-icon> 商品管理</span>
           <div class="actions">
             <el-button type="primary" @click="openForm()">
-              <el-icon><Plus /></el-icon> 新增商品
+              <el-icon><component :is="IconPlus" /></el-icon> 新增商品
             </el-button>
             <el-button @click="loadList()" :loading="loading">
-              <el-icon><Refresh /></el-icon> 刷新
+              <el-icon><component :is="IconRefresh" /></el-icon> 刷新
             </el-button>
           </div>
         </div>
@@ -27,11 +27,11 @@
           @clear="loadList"
         >
           <template #append>
-            <el-button :icon="Search" @click="loadList" />
+            <el-button :icon="IconSearch" @click="loadList" />
           </template>
         </el-input>
         <el-select v-model="filterStatus" placeholder="商品状态" clearable style="width: 150px" @change="loadList">
-          <el-option label="全部" :value="null" />
+          <el-option label="全部" value="" />
           <el-option label="上架" :value="1" />
           <el-option label="下架" :value="0" />
         </el-select>
@@ -146,7 +146,7 @@
         </el-form-item>
         <el-form-item label="商家">
           <el-select v-model="form.sellerId" placeholder="请选择商家">
-            <el-option label="无商家" :value="null" />
+            <el-option label="无商家" :value="0" />
             <el-option 
               v-for="seller in sellerList" 
               :key="seller.id" 
@@ -172,7 +172,12 @@
 <script setup>
 import { ref, onMounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Goods, Plus, Refresh, Search } from '@element-plus/icons-vue'
+import {
+  Goods as IconGoods,
+  Plus as IconPlus,
+  Refresh as IconRefresh,
+  Search as IconSearch
+} from '@element-plus/icons-vue'
 
 const http = inject('http')
 
@@ -183,14 +188,14 @@ const loading = ref(false)
 const saving = ref(false)
 const showForm = ref(false)
 const editId = ref(null)
-const form = ref({ goodsName: '', goodsDesc: '', goodsImg: '', price: 0, marketPrice: 0, stock: 0, categoryId: 0, sellerId: null, status: 1 })
+const form = ref({ goodsName: '', goodsDesc: '', goodsImg: '', price: 0, marketPrice: 0, stock: 0, categoryId: 0, sellerId: 0, status: 1 })
 
 // 分页和搜索
 const pageNum = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const searchKeyword = ref('')
-const filterStatus = ref(null)
+const filterStatus = ref('')
 
 const loadList = async () => {
   loading.value = true
@@ -199,7 +204,7 @@ const loadList = async () => {
       pageNum: pageNum.value,
       pageSize: pageSize.value,
       keyword: searchKeyword.value || undefined,
-      status: filterStatus.value
+      status: filterStatus.value !== '' ? filterStatus.value : undefined
     }
     const data = await http.get('/goods/list/all/paged', params)
     if (data.code === 200) {
@@ -246,12 +251,12 @@ const openForm = (row = null) => {
     form.value = { 
       ...row, 
       categoryId: row.categoryId || 0,
-      sellerId: row.sellerId || null,
+      sellerId: row.sellerId || 0,
       status: row.status !== undefined ? row.status : 1
     }
   } else {
     editId.value = null
-    form.value = { goodsName: '', goodsDesc: '', goodsImg: '', price: 0, marketPrice: 0, stock: 0, categoryId: 0, sellerId: null, status: 1 }
+    form.value = { goodsName: '', goodsDesc: '', goodsImg: '', price: 0, marketPrice: 0, stock: 0, categoryId: 0, sellerId: 0, status: 1 }
   }
   showForm.value = true
 }

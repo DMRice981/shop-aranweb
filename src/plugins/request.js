@@ -25,7 +25,17 @@ export default {
 
     const http = {
       get(url, params = {}) {
-        const queryString = new URLSearchParams(params).toString()
+        // 过滤 null/undefined/空字符串参数，避免后端把 null 被转成字符串 "null"
+        const cleanParams = {}
+        Object.keys(params).forEach(key => {
+          const value = params[key]
+          if (value !== null && value !== undefined && value !== '') {
+            cleanParams[key] = value
+          }
+        })
+        const queryString = Object.keys(cleanParams).length > 0
+          ? new URLSearchParams(cleanParams).toString()
+          : ''
         const fullUrl = queryString ? `${url}?${queryString}` : url
         return request(fullUrl, { method: 'GET' })
       },

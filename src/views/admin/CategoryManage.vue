@@ -3,13 +3,13 @@
     <el-card class="manage-card" shadow="hover">
       <template #header>
         <div class="header">
-          <span><el-icon><Folder /></el-icon> 分类管理</span>
+          <span><el-icon><component :is="IconFolder" /></el-icon> 分类管理</span>
           <div class="actions">
             <el-button type="primary" @click="openForm()">
-              <el-icon><Plus /></el-icon> 新增分类
+              <el-icon><component :is="IconPlus" /></el-icon> 新增分类
             </el-button>
             <el-button @click="getList()" :loading="loading">
-              <el-icon><Refresh /></el-icon> 刷新
+              <el-icon><component :is="IconRefresh" /></el-icon> 刷新
             </el-button>
           </div>
         </div>
@@ -76,6 +76,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  Folder as IconFolder,
+  Plus as IconPlus,
+  Refresh as IconRefresh
+} from '@element-plus/icons-vue'
 
 const list = ref([])
 const loading = ref(false)

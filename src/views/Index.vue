@@ -4,7 +4,7 @@
     <header class="header">
       <div class="header-content">
         <div class="logo animate-fadeInUp" @click="$router.push('/')">
-          <el-icon :size="32"><Shop /></el-icon>
+          <el-icon :size="32"><component :is="IconShop" /></el-icon>
           <span class="logo-text">Aran Shop</span>
         </div>
         
@@ -19,21 +19,21 @@
             clearable
           >
             <template #append>
-              <el-button :icon="Search" @click="handleSearch" />
+              <el-button :icon="IconSearch" @click="handleSearch" />
             </template>
           </el-input>
         </div>
         
         <nav class="nav animate-fadeInUp" style="animation-delay: 0.1s">
           <el-button link class="nav-item active" @click="$router.push('/')">
-            <el-icon><House /></el-icon> 首页
+            <el-icon><component :is="IconHouse" /></el-icon> 首页
           </el-button>
           <el-button link class="nav-item" @click="$router.push('/cart')">
-            <el-icon><ShoppingCart /></el-icon> 购物车
+            <el-icon><component :is="IconShoppingCart" /></el-icon> 购物车
             <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
           </el-button>
           <el-button link class="nav-item" @click="$router.push('/order')">
-            <el-icon><List /></el-icon> 我的订单
+            <el-icon><component :is="IconList" /></el-icon> 我的订单
           </el-button>
         </nav>
 
@@ -45,24 +45,24 @@
                   {{ user.username?.charAt(0).toUpperCase() }}
                 </el-avatar>
                 <span>{{ user.username }}</span>
-                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                <el-icon class="el-icon--right"><component :is="IconArrowDown" /></el-icon>
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item command="/user">
-                    <el-icon><User /></el-icon> 个人中心
+                    <el-icon><component :is="IconUser" /></el-icon> 个人中心
                   </el-dropdown-item>
                   <el-dropdown-item command="/order">
-                    <el-icon><List /></el-icon> 我的订单
+                    <el-icon><component :is="IconList" /></el-icon> 我的订单
                   </el-dropdown-item>
                   <el-dropdown-item command="/after-sale">
-                    <el-icon><Service /></el-icon> 我的售后
+                    <el-icon><component :is="IconService" /></el-icon> 我的售后
                   </el-dropdown-item>
                   <el-dropdown-item command="/address">
-                    <el-icon><Location /></el-icon> 收货地址
+                    <el-icon><component :is="IconLocation" /></el-icon> 收货地址
                   </el-dropdown-item>
                   <el-dropdown-item divided command="logout">
-                    <el-icon><SwitchButton /></el-icon> 退出登录
+                    <el-icon><component :is="IconSwitchButton" /></el-icon> 退出登录
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -104,7 +104,7 @@
             :class="{ active: selectedCategory === null }"
             @click="filterByCategory(null)"
           >
-            <el-icon><Grid /></el-icon> 全部商品
+            <el-icon><component :is="IconGrid" /></el-icon> 全部商品
           </div>
           <div 
             v-for="category in topCategories" 
@@ -113,7 +113,7 @@
             :class="{ active: selectedCategory === category.id }"
             @click="filterByCategory(category.id)"
           >
-            <el-icon><Folder /></el-icon> {{ category.name }}
+            <el-icon><component :is="IconFolder" /></el-icon> {{ category.name }}
           </div>
         </div>
       </div>
@@ -124,7 +124,7 @@
       <div class="section-header animate-fadeInUp">
         <div class="section-tag">精选推荐</div>
         <h2 class="section-title">
-          <el-icon><StarFilled /></el-icon> {{ selectedCategory ? currentCategoryName : '热销商品' }}
+          <el-icon><component :is="IconStarFilled" /></el-icon> {{ selectedCategory ? currentCategoryName : '热销商品' }}
         </h2>
         <p class="section-subtitle">
           {{ searchKeyword ? `搜索结果: "${searchKeyword}"` : '发现您喜欢的商品，享受品质购物' }}
@@ -162,7 +162,7 @@
           <div class="card-wrapper">
             <div class="card-image">
               <div class="image-placeholder" v-if="!item.goodsImg">
-                <el-icon :size="64"><Picture /></el-icon>
+                <el-icon :size="64"><component :is="IconPicture" /></el-icon>
               </div>
               <img v-else :src="item.goodsImg" :alt="item.goodsName" @error="handleImageError" />
               <div class="card-badges">
@@ -172,7 +172,7 @@
               </div>
               <div class="card-overlay">
                 <el-button type="primary" class="quick-view" @click.stop="$router.push(`/goods/${item.id}`)">
-                  <el-icon><View /></el-icon> 查看详情
+                  <el-icon><component :is="IconView" /></el-icon> 查看详情
                 </el-button>
               </div>
             </div>
@@ -186,11 +186,11 @@
               </p>
               <div class="card-meta">
                 <div class="sales-info">
-                  <el-icon><TrendCharts /></el-icon>
+                  <el-icon><component :is="IconTrendCharts" /></el-icon>
                   <span>已售 {{ item.sales || 0 }}</span>
                 </div>
                 <div class="stock-info" :class="{ 'low-stock': item.stock <= 5 && item.stock > 0, 'out-stock': item.stock <= 0 }">
-                  <el-icon><Box /></el-icon>
+                  <el-icon><component :is="IconBox" /></el-icon>
                   <span>{{ item.stock > 0 ? `库存 ${item.stock}` : '缺货' }}</span>
                 </div>
               </div>
@@ -208,7 +208,7 @@
                   @click.stop="addToCart(item)"
                   :disabled="item.status === 0 || item.stock <= 0"
                 >
-                  <el-icon><ShoppingCart /></el-icon>
+                  <el-icon><component :is="IconShoppingCart" /></el-icon>
                   <span>加购</span>
                 </el-button>
               </div>
@@ -218,7 +218,7 @@
       </div>
       
       <div v-else class="empty-state">
-        <el-icon :size="80"><Box /></el-icon>
+        <el-icon :size="80"><component :is="IconBox" /></el-icon>
         <h3>{{ searchKeyword ? '未找到相关商品' : '暂无商品' }}</h3>
         <p>{{ searchKeyword ? '试试其他关键词吧' : '敬请期待更多好物上架' }}</p>
         <el-button v-if="searchKeyword" type="primary" @click="clearSearch">清除搜索</el-button>
@@ -229,17 +229,17 @@
     <section class="admin-section">
       <div class="section-header">
         <h2 class="section-title">
-          <el-icon><Tools /></el-icon> 更多服务
+          <el-icon><component :is="IconTools" /></el-icon> 更多服务
         </h2>
       </div>
       <div class="admin-cards">
         <div class="admin-card animate-fadeInUp" style="animation-delay: 0.3s" @click="$router.push('/admin/login')">
-          <el-icon :size="40"><Setting /></el-icon>
+          <el-icon :size="40"><component :is="IconSetting" /></el-icon>
           <h3>管理后台</h3>
           <p>高效管理您的商城</p>
         </div>
         <div class="admin-card seller animate-fadeInUp" style="animation-delay: 0.4s" @click="$router.push('/seller/login')">
-          <el-icon :size="40"><Shop /></el-icon>
+          <el-icon :size="40"><component :is="IconShop" /></el-icon>
           <h3>商家中心</h3>
           <p>开启您的创业之旅</p>
         </div>
@@ -250,7 +250,7 @@
     <footer class="footer">
       <div class="footer-content">
         <div class="footer-brand">
-          <el-icon :size="28"><Shop /></el-icon>
+          <el-icon :size="28"><component :is="IconShop" /></el-icon>
           <span>Aran Shop</span>
         </div>
         <div class="footer-links">
@@ -270,11 +270,26 @@
 import { ref, onMounted, computed, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { 
-  Search, ArrowDown, StarFilled, Grid, Folder, 
-  Shop, House, ShoppingCart, List, User, Service, 
-  Location, SwitchButton, Tools, Setting, Box, 
-  Picture, TrendCharts, View 
+import {
+  House as IconHouse,
+  ShoppingCart as IconShoppingCart,
+  List as IconList,
+  User as IconUser,
+  Service as IconService,
+  Location as IconLocation,
+  SwitchButton as IconSwitchButton,
+  Grid as IconGrid,
+  Folder as IconFolder,
+  StarFilled as IconStarFilled,
+  View as IconView,
+  TrendCharts as IconTrendCharts,
+  Box as IconBox,
+  Tools as IconTools,
+  Shop as IconShop,
+  Search as IconSearch,
+  ArrowDown as IconArrowDown,
+  Setting as IconSetting,
+  Picture as IconPicture
 } from '@element-plus/icons-vue'
 
 const router = useRouter()

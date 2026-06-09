@@ -3,13 +3,13 @@
     <el-card class="manage-card" shadow="hover">
       <template #header>
         <div class="header">
-          <span><el-icon><User /></el-icon> 用户管理</span>
+          <span><el-icon><component :is="IconUser" /></el-icon> 用户管理</span>
           <div class="actions">
             <el-button type="primary" @click="openForm()">
-              <el-icon><Plus /></el-icon> 新增用户
+              <el-icon><component :is="IconPlus" /></el-icon> 新增用户
             </el-button>
             <el-button @click="loadList()" :loading="loading">
-              <el-icon><Refresh /></el-icon> 刷新
+              <el-icon><component :is="IconRefresh" /></el-icon> 刷新
             </el-button>
           </div>
         </div>
@@ -27,11 +27,11 @@
           @clear="loadList"
         >
           <template #append>
-            <el-button :icon="Search" @click="loadList" />
+            <el-button :icon="IconSearch" @click="loadList" />
           </template>
         </el-input>
         <el-select v-model="filterStatus" placeholder="用户状态" clearable style="width: 150px" @change="loadList">
-          <el-option label="全部" :value="null" />
+          <el-option label="全部" value="" />
           <el-option label="正常" :value="1" />
           <el-option label="禁用" :value="0" />
         </el-select>
@@ -107,7 +107,12 @@
 <script setup>
 import { ref, onMounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
+import {
+  User as IconUser,
+  Plus as IconPlus,
+  Refresh as IconRefresh,
+  Search as IconSearch
+} from '@element-plus/icons-vue'
 
 const http = inject('http')
 
@@ -129,7 +134,7 @@ const pageNum = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const searchKeyword = ref('')
-const filterStatus = ref(null)
+const filterStatus = ref('')
 
 const loadList = async () => {
   loading.value = true
@@ -138,7 +143,7 @@ const loadList = async () => {
       pageNum: pageNum.value,
       pageSize: pageSize.value,
       keyword: searchKeyword.value || undefined,
-      status: filterStatus.value
+      status: filterStatus.value !== '' ? filterStatus.value : undefined
     }
     const data = await http.get('/user/list/paged', params)
     if (data.code === 200) {

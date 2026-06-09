@@ -6,9 +6,9 @@
       <el-card class="address-card" shadow="hover">
         <template #header>
           <div class="card-header">
-            <span><el-icon><Location /></el-icon> 我的收货地址</span>
+            <span><el-icon><component :is="IconLocation" /></el-icon> 我的收货地址</span>
             <el-button type="primary" @click="showAddDialog = true">
-              <el-icon><Plus /></el-icon> 新增地址
+              <el-icon><component :is="IconPlus" /></el-icon> 新增地址
             </el-button>
           </div>
         </template>
@@ -27,13 +27,13 @@
                 <p class="detail">{{ item.province }} {{ item.city }} {{ item.district }} {{ item.detail }}</p>
                 <div class="address-actions">
                   <el-button type="primary" link @click="setDefault(item.id)" v-if="item.isDefault !== 1">
-                    <el-icon><Star /></el-icon> 设为默认
+                    <el-icon><component :is="IconStar" /></el-icon> 设为默认
                   </el-button>
                   <el-button type="primary" link @click="openEditDialog(item)">
-                    <el-icon><Edit /></el-icon> 编辑
+                    <el-icon><component :is="IconEdit" /></el-icon> 编辑
                   </el-button>
                   <el-button type="danger" link @click="deleteAddress(item.id)">
-                    <el-icon><Delete /></el-icon> 删除
+                    <el-icon><component :is="IconDelete" /></el-icon> 删除
                   </el-button>
                 </div>
               </div>
@@ -81,6 +81,13 @@
 import { ref, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  Location as IconLocation,
+  Plus as IconPlus,
+  Star as IconStar,
+  Edit as IconEdit,
+  Delete as IconDelete
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const auth = inject('auth')

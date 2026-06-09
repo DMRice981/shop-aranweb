@@ -3,13 +3,13 @@
     <el-card class="goods-card" shadow="hover">
       <template #header>
         <div class="header">
-          <span><el-icon><Goods /></el-icon> 我的商品</span>
+          <span><el-icon><component :is="IconGoods" /></el-icon> 我的商品</span>
           <div class="header-actions">
             <el-button type="primary" @click="openAddDialog">
-              <el-icon><Plus /></el-icon> 新增商品
+              <el-icon><component :is="IconPlus" /></el-icon> 新增商品
             </el-button>
             <el-button @click="loadList" :loading="loading">
-              <el-icon><Refresh /></el-icon> 刷新
+              <el-icon><component :is="IconRefresh" /></el-icon> 刷新
             </el-button>
           </div>
         </div>
@@ -27,7 +27,7 @@
           @clear="loadList"
         >
           <template #append>
-            <el-button :icon="Search" @click="loadList" />
+            <el-button :icon="IconSearch" @click="loadList" />
           </template>
         </el-input>
       </div>
@@ -56,27 +56,27 @@
               type="primary" 
               size="small" 
               @click="openEditDialog(row)">
-              <el-icon><Edit /></el-icon> 编辑
+              <el-icon><component :is="IconEdit" /></el-icon> 编辑
             </el-button>
             <el-button 
               type="success" 
               v-if="row.status !== 1" 
               size="small" 
               @click="setStatus(row.id, 1)">
-              <el-icon><CircleCheck /></el-icon> 上架
+              <el-icon><component :is="IconCircleCheck" /></el-icon> 上架
             </el-button>
             <el-button 
               type="warning" 
               v-else 
               size="small" 
               @click="setStatus(row.id, 0)">
-              <el-icon><CircleClose /></el-icon> 下架
+              <el-icon><component :is="IconCircleClose" /></el-icon> 下架
             </el-button>
             <el-button 
               type="danger" 
               size="small" 
               @click="deleteGoods(row)">
-              <el-icon><Delete /></el-icon> 删除
+              <el-icon><component :is="IconDelete" /></el-icon> 删除
             </el-button>
           </template>
         </el-table-column>
@@ -152,7 +152,16 @@
 <script setup>
 import { ref, onMounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
+import {
+  Goods as IconGoods,
+  Plus as IconPlus,
+  Refresh as IconRefresh,
+  Search as IconSearch,
+  Edit as IconEdit,
+  CircleCheck as IconCircleCheck,
+  CircleClose as IconCircleClose,
+  Delete as IconDelete
+} from '@element-plus/icons-vue'
 
 const http = inject('http')
 

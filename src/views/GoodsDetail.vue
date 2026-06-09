@@ -25,7 +25,7 @@
         <div class="image-section">
           <div class="image-wrapper">
             <div class="image-placeholder" v-if="!info.goodsImg && !info.goods_img">
-              <el-icon :size="120"><Picture /></el-icon>
+              <el-icon :size="120"><component :is="IconPicture" /></el-icon>
             </div>
             <img v-else :src="info.goodsImg || info.goods_img" :alt="info.goodsName || info.goods_name" />
           </div>
@@ -45,7 +45,7 @@
           <!-- 商家信息 -->
           <div class="seller-card" v-if="sellerInfo">
             <div class="seller-avatar">
-              <el-icon :size="40"><Shop /></el-icon>
+              <el-icon :size="40"><component :is="IconShop" /></el-icon>
             </div>
             <div class="seller-info">
               <div class="seller-name">{{ sellerInfo.shopName || sellerInfo.shop_name || '商家店铺' }}</div>
@@ -70,7 +70,7 @@
           <div class="info-cards">
             <div class="info-card">
               <div class="info-icon">
-                <el-icon><Box /></el-icon>
+                <el-icon><component :is="IconBox" /></el-icon>
               </div>
               <div class="info-content">
                 <div class="info-label">库存状态</div>
@@ -81,7 +81,7 @@
             </div>
             <div class="info-card">
               <div class="info-icon">
-                <el-icon><TrendCharts /></el-icon>
+                <el-icon><component :is="IconTrendCharts" /></el-icon>
               </div>
               <div class="info-content">
                 <div class="info-label">累计销量</div>
@@ -94,7 +94,7 @@
 
           <div class="description-section">
             <h3 class="section-title">
-              <el-icon><Document /></el-icon>
+              <el-icon><component :is="IconDocument" /></el-icon>
               商品详情
             </h3>
             <div class="description-content">
@@ -104,21 +104,21 @@
 
           <div class="quantity-section" v-if="info.status === 1">
             <h3 class="section-title">
-              <el-icon><Goods /></el-icon>
+              <el-icon><component :is="IconGoods" /></el-icon>
               购买数量
             </h3>
             <div class="quantity-control-wrapper">
               <div class="quantity-control">
                 <el-button class="qty-btn" @click="decreaseQuantity" :disabled="quantity <= 1">
-                  <el-icon><Minus /></el-icon>
+                  <el-icon><component :is="IconMinus" /></el-icon>
                 </el-button>
                 <el-input-number v-model="quantity" :min="1" :max="info.stock || 99" size="large" class="qty-input" />
                 <el-button class="qty-btn" @click="increaseQuantity" :disabled="quantity >= (info.stock || 99)">
-                  <el-icon><Plus /></el-icon>
+                  <el-icon><component :is="IconPlus" /></el-icon>
                 </el-button>
               </div>
               <div class="stock-info">
-                <el-icon><CircleCheck /></el-icon>
+                <el-icon><component :is="IconCircleCheck" /></el-icon>
                 <span>库存充足，放心购买</span>
               </div>
             </div>
@@ -126,47 +126,47 @@
 
           <div class="action-buttons" v-if="info.status === 1">
             <el-button type="primary" size="large" class="add-cart-btn" @click="addCart">
-              <el-icon><ShoppingCart /></el-icon>
+              <el-icon><component :is="IconShoppingCart" /></el-icon>
               加入购物车
             </el-button>
             <el-button size="large" class="buy-now-btn" @click="buyNow">
-              <el-icon><ShoppingBag /></el-icon>
+              <el-icon><component :is="IconShoppingBag" /></el-icon>
               立即购买
             </el-button>
           </div>
 
           <div class="action-buttons" v-else>
             <el-button size="large" class="disabled-btn" disabled>
-              <el-icon><ShoppingCart /></el-icon>
+              <el-icon><component :is="IconShoppingCart" /></el-icon>
               商品已下架
             </el-button>
             <el-button size="large" class="disabled-btn" disabled>
-              <el-icon><ShoppingBag /></el-icon>
+              <el-icon><component :is="IconShoppingBag" /></el-icon>
               无法购买
             </el-button>
           </div>
 
           <div class="features-section">
             <h3 class="section-title">
-              <el-icon><Shield /></el-icon>
+              <el-icon><component :is="IconShield" /></el-icon>
               服务保障
             </h3>
             <div class="features">
               <div class="feature-item">
                 <div class="feature-icon">
-                  <el-icon><CircleCheck /></el-icon>
+                  <el-icon><component :is="IconCircleCheck" /></el-icon>
                 </div>
                 <span>正品保障</span>
               </div>
               <div class="feature-item">
                 <div class="feature-icon">
-                  <el-icon><Truck /></el-icon>
+                  <el-icon><component :is="IconTruck" /></el-icon>
                 </div>
                 <span>极速发货</span>
               </div>
               <div class="feature-item">
                 <div class="feature-icon">
-                  <el-icon><SwitchButton /></el-icon>
+                  <el-icon><component :is="IconSwitchButton" /></el-icon>
                 </div>
                 <span>7天无理由</span>
               </div>
@@ -182,6 +182,22 @@
 import { ref, onMounted, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import {
+  Picture as IconPicture,
+  Shop as IconShop,
+  Box as IconBox,
+  TrendCharts as IconTrendCharts,
+  Document as IconDocument,
+  Goods as IconGoods,
+  Minus as IconMinus,
+  Plus as IconPlus,
+  CircleCheck as IconCircleCheck,
+  ShoppingCart as IconShoppingCart,
+  ShoppingBag as IconShoppingBag,
+  Medal as IconShield,
+  Van as IconTruck,
+  SwitchButton as IconSwitchButton
+} from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()

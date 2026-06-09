@@ -3,7 +3,7 @@
     <el-card class="manage-card" shadow="hover">
       <template #header>
         <div class="header">
-          <span><el-icon><Document /></el-icon> 订单管理</span>
+          <span><el-icon><component :is="IconDocument" /></el-icon> 订单管理</span>
           <div class="filter-buttons">
             <el-button-group>
               <el-button :type="statusFilter === null ? 'primary' : ''" @click="statusFilter = null; loadList()">全部</el-button>
@@ -22,11 +22,11 @@
               @clear="loadList"
             >
               <template #append>
-                <el-button :icon="Search" @click="loadList" />
+                <el-button :icon="IconSearch" @click="loadList" />
               </template>
             </el-input>
             <el-button @click="loadList()" :loading="loading">
-              <el-icon><Refresh /></el-icon> 刷新
+              <el-icon><component :is="IconRefresh" /></el-icon> 刷新
             </el-button>
           </div>
         </div>
@@ -61,10 +61,10 @@
         <el-table-column label="操作" width="200">
           <template #default="{ row }">
             <el-button v-if="row.orderStatus === 1" type="primary" size="small" @click="handleSend(row)">
-              <el-icon><Van /></el-icon> 发货
+              <el-icon><component :is="IconVan" /></el-icon> 发货
             </el-button>
             <el-button type="info" size="small" @click="viewDetail(row)">
-              <el-icon><View /></el-icon> 详情
+              <el-icon><component :is="IconView" /></el-icon> 详情
             </el-button>
           </template>
         </el-table-column>
@@ -126,7 +126,7 @@
       </div>
       <template #footer>
         <el-button v-if="currentOrder && currentOrder.orderStatus === 1" type="primary" @click="handleSend(currentOrder)">
-          <el-icon><Van /></el-icon> 发货
+          <el-icon><component :is="IconVan" /></el-icon> 发货
         </el-button>
         <el-button @click="detailVisible = false">关闭</el-button>
       </template>
@@ -137,7 +137,13 @@
 <script setup>
 import { ref, onMounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Document, Refresh, Van, View, Search } from '@element-plus/icons-vue'
+import {
+  Document as IconDocument,
+  Refresh as IconRefresh,
+  Van as IconVan,
+  View as IconView,
+  Search as IconSearch
+} from '@element-plus/icons-vue'
 
 const http = inject('http')
 const list = ref([])

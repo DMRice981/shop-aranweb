@@ -2,7 +2,7 @@
   <el-container class="admin-layout">
     <el-aside width="240px" class="aside">
       <div class="logo">
-        <el-icon :size="32"><Setting /></el-icon>
+        <el-icon :size="32"><component :is="IconSetting" /></el-icon>
         <span>管理后台</span>
       </div>
       <el-menu
@@ -14,27 +14,27 @@
         active-text-color="#fff"
       >
         <el-menu-item index="1">
-          <el-icon><User /></el-icon>
+          <el-icon><component :is="IconUser" /></el-icon>
           <span>用户管理</span>
         </el-menu-item>
         <el-menu-item index="2">
-          <el-icon><Folder /></el-icon>
+          <el-icon><component :is="IconFolder" /></el-icon>
           <span>分类管理</span>
         </el-menu-item>
         <el-menu-item index="3">
-          <el-icon><Goods /></el-icon>
+          <el-icon><component :is="IconGoods" /></el-icon>
           <span>商品管理</span>
         </el-menu-item>
         <el-menu-item index="4">
-          <el-icon><Picture /></el-icon>
+          <el-icon><component :is="IconPicture" /></el-icon>
           <span>轮播管理</span>
         </el-menu-item>
         <el-menu-item index="5">
-          <el-icon><Document /></el-icon>
+          <el-icon><component :is="IconDocument" /></el-icon>
           <span>订单管理</span>
         </el-menu-item>
         <el-menu-item index="0" @click="$router.push('/')">
-          <el-icon><SwitchButton /></el-icon>
+          <el-icon><component :is="IconSwitchButton" /></el-icon>
           <span>退出前台</span>
         </el-menu-item>
       </el-menu>
@@ -52,6 +52,15 @@
 
 <script setup>
 import { ref } from 'vue'
+import {
+  Setting as IconSetting,
+  User as IconUser,
+  Folder as IconFolder,
+  Goods as IconGoods,
+  Picture as IconPicture,
+  Document as IconDocument,
+  SwitchButton as IconSwitchButton
+} from '@element-plus/icons-vue'
 import UserManage from './UserManage.vue'
 import CategoryManage from './CategoryManage.vue'
 import GoodsManage from './GoodsManage.vue'

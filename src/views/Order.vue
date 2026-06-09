@@ -6,7 +6,7 @@
       <el-card class="order-card" shadow="hover">
         <template #header>
           <div class="card-header">
-            <span><el-icon><Document /></el-icon> 我的订单</span>
+            <span><el-icon><component :is="IconDocument" /></el-icon> 我的订单</span>
             <div class="header-actions">
               <el-button-group>
                 <el-button :type="statusFilter === null ? 'primary' : ''" size="small" @click="statusFilter = null; loadOrderList()">全部</el-button>
@@ -16,7 +16,7 @@
                 <el-button :type="statusFilter === 3 ? 'primary' : ''" size="small" @click="statusFilter = 3; loadOrderList()">已完成</el-button>
               </el-button-group>
               <el-button type="primary" plain @click="loadOrderList" :loading="loading" size="small">
-                <el-icon><Refresh /></el-icon> 刷新
+                <el-icon><component :is="IconRefresh" /></el-icon> 刷新
               </el-button>
             </div>
           </div>
@@ -52,7 +52,7 @@
                     fit="cover"
                     class="goods-image"
                   />
-                  <el-icon v-else :size="32" color="#667eea"><Box /></el-icon>
+                  <el-icon v-else :size="32" color="#667eea"><component :is="IconBox" /></el-icon>
                   <div class="goods-info">
                     <h4>{{ orderItem.goodsName }}</h4>
                     <p>数量: {{ orderItem.num }} × ¥{{ (orderItem.price || 0).toFixed(2) }}</p>
@@ -98,16 +98,16 @@
 
               <div class="order-actions">
                 <el-button v-if="item.payStatus !== 1 && item.orderStatus === 0" type="primary" @click="payOrder(item)">
-                  <el-icon><CreditCard /></el-icon> 立即支付
+                  <el-icon><component :is="IconCreditCard" /></el-icon> 立即支付
                 </el-button>
                 <el-button v-if="item.orderStatus === 2" type="success" @click="confirmOrder(item)">
-                  <el-icon><CircleCheck /></el-icon> 确认收货
+                  <el-icon><component :is="IconCircleCheck" /></el-icon> 确认收货
                 </el-button>
                 <el-button type="danger" plain @click="cancelOrder(item)" v-if="item.orderStatus < 3 && item.orderStatus !== 4">
-                  <el-icon><CircleClose /></el-icon> 取消订单
+                  <el-icon><component :is="IconCircleClose" /></el-icon> 取消订单
                 </el-button>
                 <el-button type="warning" @click="openAfterSaleDialog(item)" v-if="item.orderStatus >= 3">
-                  <el-icon><Service /></el-icon> 申请售后
+                  <el-icon><component :is="IconService" /></el-icon> 申请售后
                 </el-button>
               </div>
             </el-card>
@@ -168,6 +168,15 @@
 import { ref, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  Document as IconDocument,
+  Refresh as IconRefresh,
+  Box as IconBox,
+  CreditCard as IconCreditCard,
+  CircleCheck as IconCircleCheck,
+  CircleClose as IconCircleClose,
+  Service as IconService
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const auth = inject('auth')
@@ -250,8 +259,8 @@ const getAddress = (addressId) => {
 
 const loadAddresses = async () => {
   try {
-    const res = await http.get('/userAddress/list', { userId: user.value?.id })
-    const addresses = res.data || res || []
+    const res = await http.get('/address/list', { userId: user.value?.id })
+    const addresses = Array.isArray(res.data) ? res.data : []
     addresses.forEach(addr => {
       addressMap.value[addr.id] = addr
     })

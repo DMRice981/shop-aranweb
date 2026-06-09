@@ -4,7 +4,7 @@
       <el-card class="login-card" shadow="hover">
         <div class="login-header">
           <div class="logo-section">
-            <el-icon :size="48" color="#667eea"><Setting /></el-icon>
+            <el-icon :size="48" color="#667eea"><component :is="IconSetting" /></el-icon>
             <h1>管理后台</h1>
           </div>
           <p>请登录以继续</p>
@@ -16,7 +16,7 @@
               v-model="form.adminName"
               placeholder="请输入管理员账号"
               size="large"
-              prefix-icon="User"
+              :prefix-icon="IconUser"
             />
           </el-form-item>
           <el-form-item>
@@ -25,7 +25,7 @@
               type="password"
               placeholder="请输入密码"
               size="large"
-              prefix-icon="Lock"
+              :prefix-icon="IconLock"
               show-password
               @keyup.enter="login"
             />
@@ -38,7 +38,7 @@
               :loading="loading"
               @click="login"
             >
-              <el-icon><User /></el-icon>
+              <el-icon><component :is="IconUser" /></el-icon>
               登录
             </el-button>
           </el-form-item>
@@ -46,7 +46,7 @@
 
         <div class="back-home">
           <el-button link @click="$router.push('/')">
-            <el-icon><ArrowLeft /></el-icon>
+            <el-icon><component :is="IconArrowLeft" /></el-icon>
             返回首页
           </el-button>
         </div>
@@ -59,6 +59,12 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import {
+  Setting as IconSetting,
+  User as IconUser,
+  Lock as IconLock,
+  ArrowLeft as IconArrowLeft
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const loading = ref(false)

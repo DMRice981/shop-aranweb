@@ -6,13 +6,13 @@
       <el-card class="after-sale-card" shadow="hover">
         <template #header>
           <div class="header">
-            <span><el-icon><Service /></el-icon> 我的售后</span>
+            <span><el-icon><component :is="IconService" /></el-icon> 我的售后</span>
             <div class="header-actions">
               <el-button type="primary" @click="openApplyDialog">
-                <el-icon><Plus /></el-icon> 申请售后
+                <el-icon><component :is="IconPlus" /></el-icon> 申请售后
               </el-button>
               <el-button @click="getList" :loading="loading">
-                <el-icon><Refresh /></el-icon> 刷新
+                <el-icon><component :is="IconRefresh" /></el-icon> 刷新
               </el-button>
             </div>
           </div>
@@ -163,6 +163,11 @@
 import { ref, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import {
+  Service as IconService,
+  Plus as IconPlus,
+  Refresh as IconRefresh
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const auth = inject('auth')

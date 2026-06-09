@@ -16,7 +16,7 @@
               v-model="form.username"
               placeholder="请输入用户名"
               size="large"
-              prefix-icon="User"
+              :prefix-icon="IconUser"
             />
           </el-form-item>
           <el-form-item>
@@ -25,7 +25,7 @@
               type="password"
               placeholder="请输入密码"
               size="large"
-              prefix-icon="Lock"
+              :prefix-icon="IconLock"
               show-password
               @keyup.enter="login"
             />
@@ -38,7 +38,7 @@
               :loading="loading"
               @click="login"
             >
-              <el-icon><User /></el-icon>
+              <el-icon><component :is="IconUser" /></el-icon>
               登录
             </el-button>
           </el-form-item>
@@ -51,7 +51,7 @@
 
         <div class="back-home">
           <el-button link @click="$router.push('/')">
-            <el-icon><ArrowLeft /></el-icon>
+            <el-icon><component :is="IconArrowLeft" /></el-icon>
             返回首页
           </el-button>
         </div>
@@ -63,6 +63,12 @@
 <script setup>
 import { ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import {
+  User as IconUser,
+  Lock as IconLock,
+  ArrowLeft as IconArrowLeft
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const loading = ref(false)

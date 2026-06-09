@@ -4,7 +4,7 @@
       <el-card class="register-card" shadow="hover">
         <div class="register-header">
           <div class="logo-section">
-            <el-icon :size="48" color="#059669"><OfficeBuilding /></el-icon>
+            <el-icon :size="48" color="#059669"><component :is="IconOfficeBuilding" /></el-icon>
             <h1>商家注册</h1>
           </div>
           <p>创建您的商家账号</p>
@@ -16,7 +16,7 @@
               v-model="form.username" 
               placeholder="请输入账号" 
               size="large" 
-              prefix-icon="User" />
+              :prefix-icon="IconUser" />
           </el-form-item>
           <el-form-item>
             <el-input 
@@ -24,7 +24,7 @@
               type="password" 
               placeholder="请输入密码" 
               size="large" 
-              prefix-icon="Lock" 
+              :prefix-icon="IconLock" 
               show-password />
           </el-form-item>
           <el-form-item>
@@ -32,14 +32,14 @@
               v-model="form.shopName" 
               placeholder="请输入店铺名" 
               size="large" 
-              prefix-icon="Shop" />
+              :prefix-icon="IconShop" />
           </el-form-item>
           <el-form-item>
             <el-input 
               v-model="form.phone" 
               placeholder="请输入电话" 
               size="large" 
-              prefix-icon="Phone" />
+              :prefix-icon="IconPhone" />
           </el-form-item>
           <el-form-item>
             <el-button 
@@ -48,7 +48,7 @@
               class="register-button" 
               :loading="loading" 
               @click="register">
-              <el-icon><EditPen /></el-icon>
+              <el-icon><component :is="IconEditPen" /></el-icon>
               注册
             </el-button>
           </el-form-item>
@@ -61,7 +61,7 @@
 
         <div class="back-home">
           <el-button link @click="$router.push('/')">
-            <el-icon><ArrowLeft /></el-icon>
+            <el-icon><component :is="IconArrowLeft" /></el-icon>
             返回首页
           </el-button>
         </div>
@@ -74,6 +74,15 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import {
+  OfficeBuilding as IconOfficeBuilding,
+  EditPen as IconEditPen,
+  ArrowLeft as IconArrowLeft,
+  User as IconUser,
+  Lock as IconLock,
+  Shop as IconShop,
+  Phone as IconPhone
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const loading = ref(false)

@@ -9,9 +9,9 @@
           <el-card class="address-card" shadow="hover">
             <template #header>
               <div class="card-header">
-                <span><el-icon><Location /></el-icon> 收货地址</span>
+                <span><el-icon><component :is="IconLocation" /></el-icon> 收货地址</span>
                 <el-button type="primary" link @click="showAddressDialog = true">
-                  <el-icon><Plus /></el-icon> 添加地址
+                  <el-icon><component :is="IconPlus" /></el-icon> 添加地址
                 </el-button>
               </div>
             </template>
@@ -40,7 +40,7 @@
           <!-- 商品列表 -->
           <el-card class="goods-card" shadow="hover" style="margin-top: 20px;">
             <template #header>
-              <span><el-icon><ShoppingBag /></el-icon> 商品清单</span>
+              <span><el-icon><component :is="IconShoppingBag" /></el-icon> 商品清单</span>
             </template>
             
             <div v-for="item in checkoutItems" :key="item.id" class="goods-item">
@@ -51,7 +51,7 @@
                   fit="cover"
                   class="goods-img"
                 />
-                <el-icon v-else :size="40" color="#667eea"><Box /></el-icon>
+                <el-icon v-else :size="40" color="#667eea"><component :is="IconBox" /></el-icon>
               </div>
               <div class="goods-info">
                 <h4>{{ getGoodsInfo(item.goodsId)?.goodsName || '商品 ' + item.goodsId }}</h4>
@@ -69,7 +69,7 @@
           <!-- 订单摘要 -->
           <el-card class="summary-card" shadow="hover">
             <template #header>
-              <span><el-icon><Document /></el-icon> 订单摘要</span>
+              <span><el-icon><component :is="IconDocument" /></el-icon> 订单摘要</span>
             </template>
             
             <div class="summary-item">
@@ -100,7 +100,7 @@
               :disabled="!selectedAddressId"
               @click="submitOrder"
             >
-              <el-icon><ShoppingCart /></el-icon>
+              <el-icon><component :is="IconShoppingCart" /></el-icon>
               提交订单
             </el-button>
           </el-card>
@@ -146,6 +146,14 @@
 import { ref, computed, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import {
+  Location as IconLocation,
+  Plus as IconPlus,
+  ShoppingBag as IconShoppingBag,
+  Box as IconBox,
+  Document as IconDocument,
+  ShoppingCart as IconShoppingCart
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const auth = inject('auth')

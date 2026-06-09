@@ -3,13 +3,13 @@
     <el-card class="manage-card" shadow="hover">
       <template #header>
         <div class="header">
-          <span><el-icon><Picture /></el-icon> 轮播管理</span>
+          <span><el-icon><component :is="IconPicture" /></el-icon> 轮播管理</span>
           <div class="actions">
             <el-button type="primary" @click="openForm()">
-              <el-icon><Plus /></el-icon> 新增轮播
+              <el-icon><component :is="IconPlus" /></el-icon> 新增轮播
             </el-button>
             <el-button @click="getList()" :loading="loading">
-              <el-icon><Refresh /></el-icon> 刷新
+              <el-icon><component :is="IconRefresh" /></el-icon> 刷新
             </el-button>
           </div>
         </div>
@@ -61,6 +61,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  Picture as IconPicture,
+  Plus as IconPlus,
+  Refresh as IconRefresh
+} from '@element-plus/icons-vue'
 
 const list = ref([])
 const loading = ref(false)

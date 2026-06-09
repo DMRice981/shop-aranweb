@@ -34,7 +34,7 @@
         </div>
         <el-divider />
         <el-button type="danger" class="logout-btn" @click="logout">
-          <el-icon><SwitchButton /></el-icon>
+          <el-icon><component :is="IconSwitchButton" /></el-icon>
           退出登录
         </el-button>
       </el-card>
@@ -46,6 +46,9 @@
 import { onMounted, ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import {
+  SwitchButton as IconSwitchButton
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const auth = inject('auth')

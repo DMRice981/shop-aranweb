@@ -6,7 +6,7 @@
       <el-card class="cart-card" shadow="hover">
         <template #header>
           <div class="card-header">
-            <h2><el-icon><ShoppingCart /></el-icon> 购物车</h2>
+            <h2><el-icon><component :is="IconShoppingCart" /></el-icon> 购物车</h2>
             <div class="total-info">
               <span>共 <strong>{{ totalCount }}</strong> 件商品</span>
               <span>总计：<strong class="price">¥{{ totalPrice.toFixed(2) }}</strong></span>
@@ -27,7 +27,7 @@
             <el-card class="item-card">
               <el-checkbox v-model="item.selected" @change="updateTotal" />
               <div class="item-icon">
-                <el-icon :size="48" color="#667eea"><Box /></el-icon>
+                <el-icon :size="48" color="#667eea"><component :is="IconBox" /></el-icon>
               </div>
               <div class="item-detail">
                 <h4>商品 ID: {{ item.goodsId }}</h4>
@@ -43,7 +43,7 @@
               </div>
               <div class="item-actions">
                 <el-button type="danger" link @click="removeItem(item.id)">
-                  <el-icon><Delete /></el-icon> 删除
+                  <el-icon><component :is="IconDelete" /></el-icon> 删除
                 </el-button>
               </div>
             </el-card>
@@ -60,10 +60,10 @@
               <span class="total-price">合计：<strong>¥{{ selectedTotalPrice.toFixed(2) }}</strong></span>
             </div>
             <el-button type="primary" size="large" @click="goToCheckout" :disabled="selectedCount === 0">
-              <el-icon><Document /></el-icon> 去结算
+              <el-icon><component :is="IconDocument" /></el-icon> 去结算
             </el-button>
             <el-button size="large" @click="$router.push('/')">
-              <el-icon><ArrowLeft /></el-icon> 继续购物
+              <el-icon><component :is="IconArrowLeft" /></el-icon> 继续购物
             </el-button>
           </div>
         </div>
@@ -76,6 +76,13 @@
 import { ref, computed, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  ShoppingCart as IconShoppingCart,
+  Box as IconBox,
+  Delete as IconDelete,
+  Document as IconDocument,
+  ArrowLeft as IconArrowLeft
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const auth = inject('auth')

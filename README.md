@@ -1,437 +1,391 @@
-# Aran Shop 前端项目文档
+# Aran Shop 前端项目说明
 
-## 📁 项目结构
-
-```
-shop-aran/
-├── src/
-│   ├── api/              # API 接口定义
-│   │   ├── admin.js      # 管理员相关接口
-│   │   ├── banner.js     # 轮播图接口
-│   │   ├── cart.js       # 购物车接口
-│   │   ├── category.js   # 分类接口
-│   │   ├── goods.js      # 商品接口
-│   │   ├── goodsComment.js   # 商品评论接口
-│   │   ├── goodsImg.js   # 商品图片接口
-│   │   ├── order.js      # 订单接口
-│   │   ├── orderItem.js  # 订单项接口
-│   │   ├── user.js       # 用户接口
-│   │   └── userAddress.js    # 用户地址接口
-│   │
-│   ├── assets/           # 静态资源
-│   │   ├── base.css      # 基础样式
-│   │   └── main.css      # 全局样式
-│   │
-│   ├── plugins/          # Vue 插件系统
-│   │   ├── index.js      # 插件入口
-│   │   ├── progress.js   # 路由进度条插件
-│   │   ├── element.js    # Element Plus 增强插件
-│   │   ├── auth.js       # 认证管理插件
-│   │   └── request.js    # HTTP 请求封装插件
-│   │
-│   ├── router/           # 路由配置
-│   │   └── index.js      # 路由定义和守卫
-│   │
-│   ├── utils/            # 工具函数
-│   │   ├── format.js     # 格式化工具
-│   │   ├── debounce.js   # 防抖节流
-│   │   └── valid.js      # 验证工具
-│   │
-│   ├── views/            # 页面组件
-│   │   ├── admin/        # 管理员页面
-│   │   │   ├── AdminIndex.vue      # 管理员首页
-│   │   │   ├── AdminLogin.vue      # 管理员登录
-│   │   │   ├── BannerManage.vue    # 轮播图管理
-│   │   │   ├── CategoryManage.vue   # 分类管理
-│   │   │   ├── GoodsManage.vue     # 商品管理（含商家信息）
-│   │   │   ├── OrderManage.vue     # 订单管理
-│   │   │   └── UserManage.vue      # 用户管理
-│   │   │
-│   │   ├── seller/       # 商家页面
-│   │   │   ├── SellerIndex.vue     # 商家中心首页
-│   │   │   ├── SellerLogin.vue     # 商家登录
-│   │   │   ├── SellerRegister.vue  # 商家注册
-│   │   │   ├── SellerGoods.vue     # 商品管理
-│   │   │   ├── SellerOrder.vue     # 订单管理（含发货）
-│   │   │   └── SellerAfterSale.vue # 售后处理
-│   │   │
-│   │   ├── Index.vue     # 首页
-│   │   ├── Login.vue      # 用户登录
-│   │   ├── Register.vue   # 用户注册
-│   │   ├── User.vue       # 用户中心
-│   │   ├── GoodsDetail.vue    # 商品详情
-│   │   ├── Cart.vue       # 购物车
-│   │   ├── Checkout.vue   # 结算页面
-│   │   ├── Order.vue      # 订单管理
-│   │   ├── Address.vue    # 地址管理
-│   │   ├── AfterSale.vue  # 售后申请
-│   │   └── Comment.vue    # 评论页面
-│   │
-│   ├── App.vue           # 根组件
-│   └── main.js           # 入口文件
-│
-├── public/               # 公共资源
-├── .env                  # 环境变量
-├── .env.example          # 环境变量模板
-├── vite.config.js       # Vite 配置
-└── package.json         # 依赖配置
-```
-
-## 🎨 插件系统
-
-### 1. auth.js - 认证管理
-
-```javascript
-// 获取认证插件
-const auth = inject('auth')
-
-// 设置用户信息
-auth.setUser({ id: 1, username: 'test' })
-
-// 获取用户信息
-const user = auth.getUser()
-
-// 获取管理员信息
-const admin = auth.getAdmin()
-
-// 获取商家信息
-const seller = auth.getSeller()
-
-// 登出（清除所有认证信息）
-auth.logout()
-
-// 检查是否已登录
-auth.isLoggedIn()
-```
-
-### 2. http 插件 - HTTP 请求
-
-```javascript
-// 获取 http 插件
-const http = inject('http')
-
-// GET 请求
-// 重要：值为 null / undefined / '' 的参数会被自动过滤，不会发送到后端
-// 这可以避免后端出现 "Failed to convert value of type 'java.lang.String' to required type 'java.lang.Integer'" 错误
-const data = await http.get('/goods/list')
-// 分页 + 关键词搜索示例
-const filterStatus = ref('') // 使用空字符串表示全部，而非 null
-const searchKeyword = ref('')
-const pagedData = await http.get('/goods/list/all/paged', {
-  pageNum: 1,
-  pageSize: 10,
-  keyword: searchKeyword.value || undefined, // 空字符串 → undefined → 被过滤
-  status: filterStatus.value !== '' ? filterStatus.value : undefined
-})
-
-// POST 请求
-const result = await http.post('/cart/add', { userId: 1, goodsId: 1, num: 1 })
-
-// PUT 请求
-await http.put('/goods/update', formData)
-
-// DELETE 请求
-await http.delete('/goods/delete/1')
-```
-
-### 3. msg 插件 - 消息提示
-
-```javascript
-// 获取消息插件
-const msg = inject('msg')
-
-// 成功提示
-msg.success('操作成功')
-
-// 错误提示
-msg.error('操作失败')
-
-// 警告提示
-msg.warning('请注意')
-
-// 信息提示
-msg.info('这是一条信息')
-```
-
-## 📱 页面路由
-
-### 用户路由
-
-| 路径 | 组件 | 说明 | 需要登录 |
-|------|------|------|----------|
-| `/` | Index.vue | 首页 | 否 |
-| `/login` | Login.vue | 登录 | 否 |
-| `/register` | Register.vue | 注册 | 否 |
-| `/goods/:id` | GoodsDetail.vue | 商品详情 | 否 |
-| `/cart` | Cart.vue | 购物车 | 是 |
-| `/checkout` | Checkout.vue | 结算 | 是 |
-| `/order` | Order.vue | 订单列表 | 是 |
-| `/address` | Address.vue | 地址管理 | 是 |
-| `/user` | User.vue | 个人中心 | 是 |
-| `/after-sale` | AfterSale.vue | 售后申请 | 是 |
-| `/comment` | Comment.vue | 商品评论 | 是 |
-
-### 商家路由
-
-| 路径 | 组件 | 说明 | 需要登录 |
-|------|------|------|----------|
-| `/seller/login` | SellerLogin.vue | 商家登录 | 否 |
-| `/seller/register` | SellerRegister.vue | 商家注册 | 否 |
-| `/seller` | SellerIndex.vue | 商家中心 | 是 |
-| `/seller/goods` | SellerGoods.vue | 商品管理 | 是 |
-| `/seller/order` | SellerOrder.vue | 订单管理 | 是 |
-| `/seller/after-sale` | SellerAfterSale.vue | 售后处理 | 是 |
-
-### 管理员路由
-
-| 路径 | 组件 | 说明 | 需要登录 |
-|------|------|------|----------|
-| `/admin/login` | AdminLogin.vue | 管理员登录 | 否 |
-| `/admin` | AdminIndex.vue | 管理后台 | 是 |
-| `/admin/goods` | GoodsManage.vue | 商品管理 | 是 |
-| `/admin/category` | CategoryManage.vue | 分类管理 | 是 |
-| `/admin/banner` | BannerManage.vue | 轮播图管理 | 是 |
-| `/admin/order` | OrderManage.vue | 订单管理 | 是 |
-| `/admin/user` | UserManage.vue | 用户管理 | 是 |
-
-## 🎯 开发规范
-
-### 1. 组件开发规范
-
-```vue
-<template>
-  <div class="component-name">
-    <!-- 模板内容 -->
-  </div>
-</template>
-
-<script setup>
-import { ref, onMounted, inject, computed } from 'vue'
-import { ElMessage } from 'element-plus'
-import { IconName } from '@element-plus/icons-vue'
-
-// 依赖注入
-const http = inject('http')
-const auth = inject('auth')
-
-// 响应式数据
-const loading = ref(false)
-const dataList = ref([])
-
-// 计算属性
-const totalCount = computed(() => dataList.value.length)
-
-// 生命周期
-onMounted(() => {
-  loadData()
-})
-
-// 方法
-const loadData = async () => {
-  try {
-    const result = await http.get('/api/endpoint')
-    dataList.value = result.data || []
-  } catch (error) {
-    ElMessage.error('加载失败')
-  }
-}
-</script>
-
-<style scoped>
-.component-name {
-  /* 组件样式 */
-}
-</style>
-```
-
-### 2. API 调用规范
-
-```javascript
-// ✅ 推荐：使用 http 插件
-const result = await http.get('/goods/list')
-
-// ❌ 不推荐：直接使用 fetch
-const res = await fetch('/api/goods/list')
-const data = await res.json()
-```
-
-### 3. 状态管理规范
-
-```javascript
-// ✅ 推荐：使用 auth 插件
-const user = auth.getUser()
-
-// ❌ 不推荐：直接操作 localStorage
-const user = JSON.parse(localStorage.getItem('user'))
-```
-
-### 4. 图标使用规范
-
-```javascript
-// 在 script setup 中导入（使用别名避免与其他组件重名）
-import { Search as IconSearch, Plus as IconPlus, Delete as IconDelete } from '@element-plus/icons-vue'
-
-// 在模板中使用动态组件引用（推荐，避免命名冲突）
-<el-icon><component :is="IconSearch" /></el-icon>
-<el-icon><component :is="IconPlus" /></el-icon>
-<el-icon><component :is="IconDelete" /></el-icon>
-```
-
-**注意事项**：
-- 只使用 `@element-plus/icons-vue` 包中实际存在的图标导出名称
-  - ❌ 不要使用：`Shield`、`Truck`（包中不存在，会导致编译失败）
-  - ✅ 推荐替代：`Medal`、`Van` 等
-- 在 `el-input` 的 `prefix-icon` 属性中绑定组件引用：`:prefix-icon="IconSearch"`
-- 列表筛选中的 "全部" 选项使用 `value=""` 代替 `:value="null"`，`http.get()` 会自动过滤空值参数
-
-## 📊 订单状态说明
-
-| 状态值 | 名称 | 说明 | 可执行操作 |
-|--------|------|------|------------|
-| 0 | 待支付 | 用户创建订单，等待支付 | 支付、取消 |
-| 1 | 待发货 | 用户已支付，等待商家发货 | 商家发货 |
-| 2 | 已发货 | 商家已发货，配送中 | 确认收货 |
-| 3 | 已完成 | 用户确认收货，订单完成 | 申请售后、评价 |
-| 4 | 已取消 | 订单被取消 | 无 |
-
-## 🔧 常用工具函数
-
-### 格式化工具 (utils/format.js)
-
-```javascript
-import { formatPrice, formatTime, formatTimeAgo, formatSales } from '@/utils/format'
-
-formatPrice(99.9)      // "¥99.90"
-formatTime(new Date())  // "2024-01-01 12:00:00"
-formatTimeAgo(date)     // "1分钟前"
-formatSales(15000)     // "1.5万+"
-```
-
-### 防抖节流 (utils/debounce.js)
-
-```javascript
-import { debounce, throttle } from '@/utils/debounce'
-
-// 防抖：300ms 后执行
-const handleSearch = debounce((keyword) => {
-  console.log('搜索:', keyword)
-}, 300)
-
-// 节流：200ms 内最多执行一次
-const handleScroll = throttle(() => {
-  console.log('滚动')
-}, 200)
-```
-
-### 验证工具 (utils/valid.js)
-
-```javascript
-import { isPhone, isEmail, isPassword, isNotEmpty } from '@/utils/valid'
-
-isPhone('13800138000')          // true
-isEmail('test@example.com')     // true
-isPassword('Password123!')      // true
-isNotEmpty('hello')             // true
-```
-
-## 📝 样式规范
-
-### 1. CSS 变量
-
-```css
-:root {
-  --primary-color: #667eea;
-  --success-color: #67c23a;
-  --warning-color: #e6a23c;
-  --danger-color: #f56c6c;
-  --text-primary: #303133;
-  --text-secondary: #909399;
-  --border-color: #dcdfe6;
-}
-```
-
-### 2. 响应式断点
-
-```css
-/* 超大屏幕 */
-@media (max-width: 1200px) { }
-
-/* 大屏幕 */
-@media (max-width: 968px) { }
-
-/* 平板 */
-@media (max-width: 768px) { }
-
-/* 手机 */
-@media (max-width: 640px) { }
-```
-
-### 3. 组件样式隔离
-
-```vue
-<style scoped>
-/* 使用 scoped 确保样式只作用于当前组件 */
-.component {
-  padding: 20px;
-}
-
-/* 使用 :deep() 修改子组件样式 */
-:deep(.el-button) {
-  border-radius: 8px;
-}
-</style>
-```
-
-## 🚀 性能优化
-
-### 1. 图片懒加载
-
-```vue
-<el-image 
-  :src="imageUrl" 
-  lazy 
-  style="width: 200px; height: 200px;" 
-/>
-```
-
-### 2. 列表虚拟滚动
-
-```vue
-<el-table-v2
-  :data="largeDataList"
-  :columns="columns"
-  :width="800"
-  :height="400"
-/>
-```
-
-### 3. 路由懒加载
-
-```javascript
-// router/index.js
-const routes = [
-  {
-    path: '/goods/:id',
-    component: () => import('@/views/GoodsDetail.vue')
-  }
-]
-```
-
-## 📚 相关文档
-
-- [开发指南](../springboot/DEVELOPMENT_GUIDE.md) - 详细的开发文档
-- [Element Plus 文档](https://element-plus.org/) - UI 组件库文档
-- [Vue 3 文档](https://vuejs.org/) - Vue 官方文档
-- [Vite 文档](https://vitejs.dev/) - 构建工具文档
-
-## 🤝 贡献指南
-
-1. 遵循项目代码规范
-2. 使用 `npm run format` 格式化代码
-3. 添加必要的组件注释
-4. 确保功能测试通过
-5. 提交前检查无编译错误
+这是 Aran Shop 的 Vue 3 前端项目，使用 Vite、Element Plus、Vue Router 和插件化封装实现用户端、商家端、管理员端页面。当前版本已接入 WebSocket 实时聊天第一阶段能力。
 
 ---
 
-**Happy Coding! 🚀**
+## 1. 技术栈
+
+| 类型 | 技术 |
+| --- | --- |
+| 框架 | Vue 3 |
+| 构建工具 | Vite 8 |
+| UI 组件 | Element Plus |
+| 路由 | Vue Router 4 |
+| 图标 | @element-plus/icons-vue |
+| 实时通信 | 浏览器原生 WebSocket |
+| Node 版本 | Node.js 20.19+ |
+
+---
+
+## 2. 运行命令
+
+### 2.1 安装依赖
+
+```powershell
+cd C:\Users\Lenovo\Desktop\cxode\shop-aran
+npm install
+```
+
+### 2.2 开发运行
+
+```powershell
+npm run dev
+```
+
+默认访问：
+
+```text
+http://localhost:5173
+```
+
+### 2.3 生产构建
+
+```powershell
+npm run build
+```
+
+当前验证结果：
+
+```text
+✓ built in 1.99s
+```
+
+---
+
+## 3. 环境变量
+
+前端环境变量文件：
+
+- [.env](file:///C:/Users/Lenovo/Desktop/cxode/shop-aran/.env)
+- [.env.example](file:///C:/Users/Lenovo/Desktop/cxode/shop-aran/.env.example)
+
+推荐配置：
+
+```env
+VITE_API_BASE_URL=http://localhost:8081
+VITE_API_PREFIX=/api
+VITE_REQUEST_TIMEOUT=5000
+```
+
+WebSocket 插件会根据 `VITE_API_BASE_URL` 自动把：
+
+```text
+http://localhost:8081
+```
+
+转换为：
+
+```text
+ws://localhost:8081/ws/chat
+```
+
+---
+
+## 4. 项目结构
+
+```text
+shop-aran/
+├── src/
+│   ├── components/
+│   │   └── ChatPanel.vue
+│   ├── plugins/
+│   │   ├── index.js
+│   │   ├── auth.js
+│   │   ├── element.js
+│   │   ├── progress.js
+│   │   ├── request.js
+│   │   └── websocket.js
+│   ├── router/
+│   │   └── index.js
+│   ├── utils/
+│   │   ├── debounce.js
+│   │   ├── format.js
+│   │   └── valid.js
+│   ├── views/
+│   │   ├── admin/
+│   │   │   ├── AdminChat.vue
+│   │   │   ├── AdminIndex.vue
+│   │   │   ├── AdminLogin.vue
+│   │   │   ├── BannerManage.vue
+│   │   │   ├── CategoryManage.vue
+│   │   │   ├── GoodsManage.vue
+│   │   │   ├── OrderManage.vue
+│   │   │   └── UserManage.vue
+│   │   ├── seller/
+│   │   │   ├── SellerAfterSale.vue
+│   │   │   ├── SellerChat.vue
+│   │   │   ├── SellerGoods.vue
+│   │   │   ├── SellerIndex.vue
+│   │   │   ├── SellerLogin.vue
+│   │   │   ├── SellerOrder.vue
+│   │   │   └── SellerRegister.vue
+│   │   ├── Address.vue
+│   │   ├── AfterSale.vue
+│   │   ├── Cart.vue
+│   │   ├── Chat.vue
+│   │   ├── Checkout.vue
+│   │   ├── Comment.vue
+│   │   ├── GoodsDetail.vue
+│   │   ├── Index.vue
+│   │   ├── Login.vue
+│   │   ├── Order.vue
+│   │   ├── Register.vue
+│   │   └── User.vue
+│   ├── App.vue
+│   └── main.js
+├── vite.config.js
+└── package.json
+```
+
+---
+
+## 5. 插件系统
+
+所有插件在 [plugins/index.js](file:///C:/Users/Lenovo/Desktop/cxode/shop-aran/src/plugins/index.js) 中统一注册。
+
+| 插件 | 文件 | 作用 |
+| --- | --- | --- |
+| 认证插件 | `plugins/auth.js` | 管理用户、商家、管理员登录态 |
+| 请求插件 | `plugins/request.js` | 统一 HTTP 请求与参数过滤 |
+| WebSocket 插件 | `plugins/websocket.js` | 聊天连接、重连、消息分发、在线状态 |
+| Element Plus 插件 | `plugins/element.js` | 注册 UI 组件能力 |
+| 进度条插件 | `plugins/progress.js` | 路由切换进度条 |
+
+### 5.1 HTTP 插件
+
+在页面中使用：
+
+```javascript
+const http = inject('http')
+```
+
+GET 请求会自动过滤以下参数：
+
+- `null`
+- `undefined`
+- `''`
+
+这样可以避免后端收到字符串 `"null"` 导致 Integer 转换失败。
+
+示例：
+
+```javascript
+const list = await http.get('/goods/list/all/paged', {
+  pageNum: 1,
+  pageSize: 10,
+  keyword: searchKeyword.value || undefined,
+  status: filterStatus.value !== '' ? filterStatus.value : undefined
+})
+```
+
+### 5.2 WebSocket 插件
+
+在页面中使用：
+
+```javascript
+const chatSocket = inject('chatSocket')
+```
+
+连接：
+
+```javascript
+chatSocket.connect({ userType: 'USER', userId: 1 })
+```
+
+发送文本消息：
+
+```javascript
+chatSocket.sendMessage({
+  conversationId: 1,
+  receiverType: 'SELLER',
+  receiverId: 1,
+  messageType: 'TEXT',
+  content: '你好，请问这个商品还有库存吗？'
+})
+```
+
+监听实时消息：
+
+```javascript
+const offMessage = chatSocket.onMessage(message => {
+  console.log(message)
+})
+```
+
+监听在线状态：
+
+```javascript
+const offStatus = chatSocket.onStatus(status => {
+  console.log(status)
+})
+```
+
+组件卸载时取消监听：
+
+```javascript
+offMessage()
+offStatus()
+```
+
+---
+
+## 6. 实时聊天页面
+
+聊天 UI 由 [ChatPanel.vue](file:///C:/Users/Lenovo/Desktop/cxode/shop-aran/src/components/ChatPanel.vue) 复用实现。
+
+三端页面：
+
+| 页面 | 文件 | 角色 |
+| --- | --- | --- |
+| 用户聊天 | `views/Chat.vue` | USER |
+| 商家聊天 | `views/seller/SellerChat.vue` | SELLER |
+| 管理员聊天 | `views/admin/AdminChat.vue` | ADMIN |
+
+当前支持：
+
+- WebSocket 实时文本消息
+- 会话列表
+- 历史消息
+- 选择联系人弹窗
+- 未读数展示
+- 在线/离线状态
+- 自己和对方消息气泡区分
+- Ctrl + Enter 快捷发送
+
+聊天入口：
+
+| 入口 | 说明 |
+| --- | --- |
+| `/chat` | 用户消息中心 |
+| `/seller/chat` | 商家消息中心 |
+| `/admin/chat` | 管理员消息管理 |
+| 用户中心 | “我的消息”入口 |
+| 商家后台 | “消息中心”入口 |
+| 管理后台 | “消息管理”入口 |
+| 商品详情页 | “联系商家”按钮 |
+
+商品详情页联系商家会跳转到：
+
+```text
+/chat?targetType=SELLER&targetId=商家ID
+```
+
+---
+
+## 7. 路由说明
+
+路由定义在 [router/index.js](file:///C:/Users/Lenovo/Desktop/cxode/shop-aran/src/router/index.js)。
+
+### 用户路由
+
+| 路径 | 页面 | 说明 |
+| --- | --- | --- |
+| `/` | Index.vue | 首页 |
+| `/login` | Login.vue | 用户登录 |
+| `/register` | Register.vue | 用户注册 |
+| `/goods/:id` | GoodsDetail.vue | 商品详情 |
+| `/cart` | Cart.vue | 购物车 |
+| `/checkout` | Checkout.vue | 结算 |
+| `/order` | Order.vue | 我的订单 |
+| `/address` | Address.vue | 地址管理 |
+| `/after-sale` | AfterSale.vue | 售后申请 |
+| `/comment` | Comment.vue | 商品评价 |
+| `/user` | User.vue | 用户中心 |
+| `/chat` | Chat.vue | 我的消息 |
+
+### 商家路由
+
+| 路径 | 页面 | 说明 |
+| --- | --- | --- |
+| `/seller/login` | SellerLogin.vue | 商家登录 |
+| `/seller/register` | SellerRegister.vue | 商家注册 |
+| `/seller/index` | SellerIndex.vue | 商家中心 |
+| `/seller/chat` | SellerChat.vue | 商家消息 |
+
+### 管理员路由
+
+| 路径 | 页面 | 说明 |
+| --- | --- | --- |
+| `/admin/login` | AdminLogin.vue | 管理员登录 |
+| `/admin/index` | AdminIndex.vue | 管理后台 |
+| `/admin/chat` | AdminChat.vue | 消息管理 |
+
+---
+
+## 8. 图标规范
+
+Element Plus 图标统一使用别名导入，避免和组件或原生标签冲突。
+
+推荐写法：
+
+```javascript
+import { Search as IconSearch, Plus as IconPlus } from '@element-plus/icons-vue'
+```
+
+模板中使用动态组件：
+
+```vue
+<el-icon><component :is="IconSearch" /></el-icon>
+```
+
+注意：
+
+- 不要使用包中不存在的图标名，例如 `Shield`、`Truck`
+- 可替换为 `Medal`、`Van` 等真实存在的图标
+- `el-option` 的“全部”选项使用 `value=""`，不要使用 `:value="null"`
+
+---
+
+## 9. 常见问题
+
+### 9.1 聊天连接失败
+
+检查：
+
+1. 后端是否运行在 `http://localhost:8081`
+2. 前端 `.env` 中 `VITE_API_BASE_URL` 是否正确
+3. 当前用户、商家或管理员是否已登录
+4. 浏览器控制台是否有 WebSocket 连接错误
+5. 数据库是否已经创建 `chat_conversation` 和 `chat_message`
+
+### 9.2 列表接口出现 `For input string: "null"`
+
+原因是 URL 参数中出现字符串 `"null"`。当前 `http.get()` 已过滤空参数，页面筛选项应使用：
+
+```javascript
+const filterStatus = ref('')
+```
+
+而不是：
+
+```javascript
+const filterStatus = ref(null)
+```
+
+### 9.3 前端构建 chunk 过大警告
+
+`npm run build` 可能提示部分 chunk 超过 500KB。这是构建警告，不是错误。当前项目已使用路由懒加载，后续可继续拆分 Element Plus 或大型页面依赖。
+
+---
+
+## 10. 当前验证状态
+
+| 验证项 | 命令 | 状态 |
+| --- | --- | --- |
+| 前端生产构建 | `npm run build` | 通过 |
+| 后端 JDK 25 编译 | `mvn clean compile -DskipTests` | 通过 |
+| 聊天页面构建 | `/chat`、`/seller/chat`、`/admin/chat` | 已纳入构建 |
+
+---
+
+## 11. 后续扩展
+
+实时聊天后续可扩展：
+
+1. 图片消息
+2. 商品卡片消息
+3. 订单卡片消息
+4. 消息发送失败重试
+5. 已读回执
+6. 最近联系人排序优化

@@ -33,6 +33,10 @@
           <el-icon><component :is="IconDocument" /></el-icon>
           <span>订单管理</span>
         </el-menu-item>
+        <el-menu-item index="6">
+          <el-icon><component :is="IconChatDotRound" /></el-icon>
+          <span>消息管理</span>
+        </el-menu-item>
         <el-menu-item index="0" @click="$router.push('/')">
           <el-icon><component :is="IconSwitchButton" /></el-icon>
           <span>退出前台</span>
@@ -46,6 +50,7 @@
       <GoodsManage v-if="page === 3" />
       <BannerManage v-if="page === 4" />
       <OrderManage v-if="page === 5" />
+      <AdminChat v-if="page === 6" />
     </el-main>
   </el-container>
 </template>
@@ -59,6 +64,7 @@ import {
   Goods as IconGoods,
   Picture as IconPicture,
   Document as IconDocument,
+  ChatDotRound as IconChatDotRound,
   SwitchButton as IconSwitchButton
 } from '@element-plus/icons-vue'
 import UserManage from './UserManage.vue'
@@ -66,6 +72,7 @@ import CategoryManage from './CategoryManage.vue'
 import GoodsManage from './GoodsManage.vue'
 import BannerManage from './BannerManage.vue'
 import OrderManage from './OrderManage.vue'
+import AdminChat from './AdminChat.vue'
 
 const page = ref(1)
 const activeMenu = ref('1')

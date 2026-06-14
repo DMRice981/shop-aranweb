@@ -51,7 +51,13 @@
               <div class="seller-name">{{ sellerInfo.shopName || sellerInfo.shop_name || '商家店铺' }}</div>
               <div class="seller-phone">联系电话：{{ sellerInfo.phone || '暂无' }}</div>
             </div>
-            <el-button type="primary" plain size="small" class="enter-shop-btn">进入店铺</el-button>
+            <div class="seller-actions">
+              <el-button type="primary" plain size="small" class="enter-shop-btn">进入店铺</el-button>
+              <el-button type="success" plain size="small" @click="contactSeller">
+                <el-icon><component :is="IconChatDotRound" /></el-icon>
+                联系商家
+              </el-button>
+            </div>
           </div>
 
           <div class="price-card">
@@ -194,6 +200,7 @@ import {
   CircleCheck as IconCircleCheck,
   ShoppingCart as IconShoppingCart,
   ShoppingBag as IconShoppingBag,
+  ChatDotRound as IconChatDotRound,
   Medal as IconShield,
   Van as IconTruck,
   SwitchButton as IconSwitchButton
@@ -263,6 +270,20 @@ const addCart = async () => {
   } catch (error) {
     ElMessage.error('加入购物车失败')
   }
+}
+
+const contactSeller = () => {
+  const user = auth.getUser()
+  if (!user) {
+    ElMessage.warning('请先登录')
+    router.push('/login')
+    return
+  }
+  if (!sellerInfo.value?.id) {
+    ElMessage.warning('暂无可联系商家')
+    return
+  }
+  router.push(`/chat?targetType=SELLER&targetId=${sellerInfo.value.id}`)
 }
 
 const buyNow = () => {
@@ -457,6 +478,13 @@ const increaseQuantity = () => {
 .seller-phone {
   font-size: 13px;
   color: var(--text-secondary);
+}
+
+.seller-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .enter-shop-btn {

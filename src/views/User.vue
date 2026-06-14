@@ -6,7 +6,7 @@
       <el-card class="user-card" shadow="hover">
         <div class="user-info">
           <div class="avatar">
-            <el-icon :size="64"><User /></el-icon>
+            <el-icon :size="64"><component :is="IconUser" /></el-icon>
           </div>
           <div class="info">
             <h3>{{ user?.username || '用户' }}</h3>
@@ -24,12 +24,16 @@
             <span>我的售后</span>
           </div>
           <div class="menu-item" @click="$router.push('/address')">
-            <el-icon :size="28"><Location /></el-icon>
+            <el-icon :size="28"><component :is="IconLocation" /></el-icon>
             <span>收货地址</span>
           </div>
           <div class="menu-item" @click="$router.push('/cart')">
-            <el-icon :size="28"><ShoppingCart /></el-icon>
+            <el-icon :size="28"><component :is="IconShoppingCart" /></el-icon>
             <span>我的购物车</span>
+          </div>
+          <div class="menu-item" @click="$router.push('/chat')">
+            <el-icon :size="28"><component :is="IconChatDotRound" /></el-icon>
+            <span>我的消息</span>
           </div>
         </div>
         <el-divider />
@@ -47,6 +51,12 @@ import { onMounted, ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
+  User as IconUser,
+  Document as IconDocument,
+  Service as IconService,
+  Location as IconLocation,
+  ShoppingCart as IconShoppingCart,
+  ChatDotRound as IconChatDotRound,
   SwitchButton as IconSwitchButton
 } from '@element-plus/icons-vue'
 

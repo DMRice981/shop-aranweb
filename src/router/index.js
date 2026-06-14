@@ -62,10 +62,12 @@ const routes = [
     { path: '/order', component: () => import('@/views/Order.vue'), meta: { requiresAuth: true, title: '我的订单' } },
     { path: '/after-sale', component: () => import('@/views/AfterSale.vue'), meta: { requiresAuth: true, title: '我的售后' } },
     { path: '/comment', component: () => import('@/views/Comment.vue'), meta: { requiresAuth: true, title: '评价' } },
+    { path: '/chat', component: () => import('@/views/Chat.vue'), meta: { requiresAuth: true, title: '我的消息' } },
 
     // 管理员后台页面
     { path: '/admin/login', component: () => import('@/views/admin/AdminLogin.vue'), meta: { title: '管理员登录' } },
     { path: '/admin/index', component: () => import('@/views/admin/AdminIndex.vue'), meta: { requiresAdmin: true, title: '管理后台' } },
+    { path: '/admin/chat', component: () => import('@/views/admin/AdminChat.vue'), meta: { requiresAdmin: true, title: '消息管理' } },
 
     //商家
     {
@@ -82,6 +84,11 @@ const routes = [
         path: '/seller/index',
         component: () => import('@/views/seller/SellerIndex.vue'),
         meta: { requiresSeller: true, title: '商家中心' }
+    },
+    {
+        path: '/seller/chat',
+        component: () => import('@/views/seller/SellerChat.vue'),
+        meta: { requiresSeller: true, title: '商家消息' }
     }
 ]
 

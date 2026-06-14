@@ -10,12 +10,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject } from 'vue'
+const http = inject('http')
 const commentList = ref([])
 
 onMounted(async () => {
-  const res = await fetch('/api/comment/list')
-  const result = await res.json()
+  const result = await http.get('/comment/list')
   commentList.value = result.data || result
 })
 </script>

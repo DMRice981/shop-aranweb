@@ -89,7 +89,10 @@ const routes = [
         path: '/seller/chat',
         component: () => import('@/views/seller/SellerChat.vue'),
         meta: { requiresSeller: true, title: '商家消息' }
-    }
+    },
+
+    // 404 页面
+    { path: '/:pathMatch(.*)*', redirect: '/' }
 ]
 
 const router = createRouter({
@@ -126,7 +129,7 @@ router.beforeEach((to, from, next) => {
     
     // 管理员认证检查
     if (to.meta.requiresAdmin) {
-        const admin = localStorage.getItem('adminInfo')
+        const admin = localStorage.getItem('admin')
         if (!admin) {
             ElMessage.warning('请先登录管理员账号')
             progressBar.done()

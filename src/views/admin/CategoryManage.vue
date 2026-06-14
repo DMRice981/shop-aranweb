@@ -74,13 +74,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Folder as IconFolder,
   Plus as IconPlus,
   Refresh as IconRefresh
 } from '@element-plus/icons-vue'
+
+const http = inject('http')
 
 const list = ref([])
 const loading = ref(false)
@@ -102,8 +104,7 @@ const getParentName = (pid) => {
 const getList = async () => {
   loading.value = true
   try {
-    const res = await fetch('/api/category/list')
-    const data = await res.json()
+    const data = await http.get('/category/list')
     list.value = data.data || (Array.isArray(data) ? data : [])
   } catch (e) {
     ElMessage.error('加载失败')
@@ -133,18 +134,10 @@ const save = async () => {
   saving.value = true
   try {
     if (editId.value) {
-      await fetch('/api/category/update', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form.value)
-      })
+      await http.put('/category/update', form.value)
       ElMessage.success('修改成功')
     } else {
-      await fetch('/api/category/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form.value)
-      })
+      await http.post('/category/add', form.value)
       ElMessage.success('添加成功')
     }
     showForm.value = false
@@ -169,7 +162,7 @@ const del = async (id) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    await fetch(`/api/category/delete/${id}`, { method: 'DELETE' })
+    await http.delete(`/category/delete/${id}`)
     ElMessage.success('删除成功')
     getList()
   } catch (error) {

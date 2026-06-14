@@ -18,10 +18,14 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       proxy: {
-        [env.VITE_API_PREFIX || '/api']: {
+        '/api': {
           target: env.VITE_API_BASE_URL || 'http://localhost:8081',
-          changeOrigin: true,
-          rewrite: (path) => path.replace(new RegExp(`^\\${env.VITE_API_PREFIX || '/api'}`), '')
+          changeOrigin: true
+        },
+        '/ws': {
+          target: 'ws://localhost:8081',
+          ws: true,
+          rewrite: (path) => '/api' + path
         }
       }
     }

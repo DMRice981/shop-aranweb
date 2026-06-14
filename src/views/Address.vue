@@ -107,10 +107,11 @@ const addressForm = ref({
   isDefault: 0
 })
 
+const http = inject('http')
+
 const getAddressList = async () => {
   try {
-    const res = await fetch(`/api/address/list?userId=${user.value?.id}`)
-    const result = await res.json()
+    const result = await http.get('/address/list', { userId: user.value?.id })
     addressList.value = result.data || result
   } catch (error) {
     ElMessage.error('加载地址失败')
@@ -131,18 +132,10 @@ const saveAddress = async () => {
   
   try {
     if (editId.value) {
-      await fetch('/api/address/update', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(addressForm.value)
-      })
+      await http.put('/address/update', addressForm.value)
       ElMessage.success('修改成功')
     } else {
-      await fetch('/api/address/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(addressForm.value)
-      })
+      await http.post('/address/add', addressForm.value)
       ElMessage.success('添加成功')
     }
     
@@ -159,20 +152,12 @@ const setDefault = async (id) => {
     const addr = addressList.value.find(a => a.id === id)
     if (addr) {
       addr.isDefault = 1
-      await fetch('/api/address/update', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(addr)
-      })
+      await http.put('/address/update', addr)
       
       for (const item of addressList.value) {
         if (item.id !== id && item.isDefault === 1) {
           item.isDefault = 0
-          await fetch('/api/address/update', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(item)
-          })
+          await http.put('/address/update', item)
         }
       }
       
@@ -192,7 +177,7 @@ const deleteAddress = async (id) => {
       type: 'warning'
     })
     
-    await fetch(`/api/address/delete/${id}`, { method: 'DELETE' })
+    await http.delete(`/address/delete/${id}`)
     ElMessage.success('删除成功')
     getAddressList()
   } catch (error) {

@@ -59,13 +59,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Picture as IconPicture,
   Plus as IconPlus,
   Refresh as IconRefresh
 } from '@element-plus/icons-vue'
+
+const http = inject('http')
 
 const list = ref([])
 const loading = ref(false)
@@ -77,8 +79,7 @@ const form = ref({ imgUrl: '', sort: 0 })
 const getList = async () => {
   loading.value = true
   try {
-    const res = await fetch('/api/banner/list')
-    const data = await res.json()
+    const data = await http.get('/banner/list')
     list.value = data.data || (Array.isArray(data) ? data : [])
   } catch (e) {
     ElMessage.error('加载失败')
@@ -108,18 +109,10 @@ const save = async () => {
   saving.value = true
   try {
     if (editId.value) {
-      await fetch('/api/banner/update', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form.value)
-      })
+      await http.put('/banner/update', form.value)
       ElMessage.success('修改成功')
     } else {
-      await fetch('/api/banner/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form.value)
-      })
+      await http.post('/banner/add', form.value)
       ElMessage.success('添加成功')
     }
     showForm.value = false
@@ -138,7 +131,7 @@ const del = async (id) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    await fetch(`/api/banner/delete/${id}`, { method: 'DELETE' })
+    await http.delete(`/banner/delete/${id}`)
     ElMessage.success('删除成功')
     getList()
   } catch (error) {

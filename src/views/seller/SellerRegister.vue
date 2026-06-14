@@ -71,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -85,6 +85,7 @@ import {
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
+const http = inject('http')
 const loading = ref(false)
 const form = ref({
   username: '',
@@ -101,13 +102,7 @@ const register = async () => {
 
   loading.value = true
   try {
-    const res = await fetch('/api/seller/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form.value)
-    })
-    
-    const data = await res.json()
+    const data = await http.post('/seller/register', form.value)
     
     if (data.code === 200) {
       ElMessage.success('注册成功，请登录')

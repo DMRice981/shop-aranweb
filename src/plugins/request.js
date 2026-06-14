@@ -6,6 +6,7 @@ export default {
       const fullUrl = url.startsWith('http') ? url : BASE_URL + url
       
       const config = {
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           ...options.headers

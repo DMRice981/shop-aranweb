@@ -270,7 +270,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Service as IconService,
@@ -278,6 +278,7 @@ import {
   Check as IconCheck
 } from '@element-plus/icons-vue'
 
+const http = inject('http')
 const list = ref([])
 const loading = ref(false)
 const handleLoading = ref(false)
@@ -313,8 +314,7 @@ const formatDate = (dateStr) => {
 const getList = async () => {
   loading.value = true
   try {
-    const res = await fetch(`/api/after-sale/list?sellerId=${seller.id}`)
-    const data = await res.json()
+    const data = await http.get('/after-sale/list', { sellerId: seller.id })
     if (data.code === 200) {
       list.value = data.data || []
     } else {
@@ -341,10 +341,7 @@ const confirmHandle = async () => {
   
   handleLoading.value = true
   try {
-    const res = await fetch(`/api/after-sale/handle?id=${currentItem.value.afterSale.id}`, {
-      method: 'POST'
-    })
-    const result = await res.json()
+    const result = await http.post(`/after-sale/handle?id=${currentItem.value.afterSale.id}`)
     
     if (result.code === 200) {
       ElMessage.success('处理成功')

@@ -8,8 +8,9 @@ export default {
     const connectionListeners = new Set()
 
     const getWsBaseUrl = () => {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
-      return baseUrl.replace(/^http/, 'ws')
+      // 开发环境使用当前页面的协议和主机，让 Vite proxy 转发 WebSocket
+      const wsHost = window.location.host
+      return `ws://${wsHost}`
     }
 
     const notifyConnection = (connected) => {

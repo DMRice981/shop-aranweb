@@ -171,6 +171,7 @@ import {
 
 const router = useRouter()
 const auth = inject('auth')
+const http = inject('http')
 const user = ref(auth.getUser())
 const list = ref([])
 const orderList = ref([])
@@ -202,8 +203,7 @@ const formatDate = (dateStr) => {
 const getList = async () => {
   loading.value = true
   try {
-    const res = await fetch(`/api/after-sale/list?userId=${user.value?.id}`)
-    const data = await res.json()
+    const data = await http.get('/after-sale/list', { userId: user.value?.id })
     list.value = data.data || []
   } catch (error) {
     ElMessage.error('加载失败')
@@ -214,8 +214,7 @@ const getList = async () => {
 
 const getOrderList = async () => {
   try {
-    const res = await fetch(`/api/order/list?userId=${user.value?.id}`)
-    const data = await res.json()
+    const data = await http.get('/order/list', { userId: user.value?.id })
     if (data.code === 200) {
       orderList.value = data.data || []
     }
@@ -232,8 +231,7 @@ const handleOrderChange = async (orderId) => {
   }
   
   try {
-    const res = await fetch(`/api/order/get/${orderId}`)
-    const data = await res.json()
+    const data = await http.get(`/order/get/${orderId}`)
     if (data.code === 200 && data.data.orderItems) {
       orderGoods.value = data.data.orderItems
     }
@@ -280,12 +278,7 @@ const submitApply = async () => {
       reason: form.value.reason
     }
     
-    const res = await fetch('/api/after-sale/add', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(applyData)
-    })
-    const result = await res.json()
+    const result = await http.post('/after-sale/add', applyData)
     
     if (result.code === 200) {
       ElMessage.success('申请成功，我们会尽快处理您的售后请求')

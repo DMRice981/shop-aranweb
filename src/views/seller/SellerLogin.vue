@@ -61,7 +61,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -72,6 +72,8 @@ import {
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
+const http = inject('http')
+const auth = inject('auth')
 const loading = ref(false)
 const form = ref({
   username: '',
@@ -86,15 +88,10 @@ const login = async () => {
 
   loading.value = true
   try {
-    const res = await fetch('/api/seller/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form.value)
-    })
-    const data = await res.json()
-    
+    const data = await http.post('/seller/login', form.value)
+
     if (data.code === 200) {
-      localStorage.setItem('seller', JSON.stringify(data.data))
+      auth.setSeller(data.data)
       ElMessage.success('登录成功')
       router.push('/seller/index')
     } else {
